@@ -42,6 +42,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true # CRITICAL: Required for Material icon font - DO NOT REMOVE
   assets:
+    - .env
     - assets/
     - assets/images/
   # CRITICAL ASSET MANAGEMENT RULES:
