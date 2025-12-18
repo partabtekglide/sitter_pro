@@ -62,7 +62,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
 
       // Load notifications as recent activities
       final notifications = await SupabaseService.instance.getNotifications();
-      print('Loaded ${appointments.length} appointments and ${notifications.length} notifications');
+      print('Loaded ${appointments} appointments and ${notifications.length} notifications');
 
       if (mounted) {
         setState(() {

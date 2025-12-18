@@ -107,20 +107,6 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
 
           SizedBox(height: 4.h),
 
-          // Address
-          _buildTextField(
-            context,
-            'Service Address',
-            'Where will the service take place?',
-            _addressController,
-            _addressFocus,
-            'location_on',
-            maxLines: 2,
-            isRequired: true,
-          ),
-
-          SizedBox(height: 3.h),
-
           // Special Instructions
           _buildTextField(
             context,
@@ -131,6 +117,20 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
             'edit_note',
             maxLines: 4,
             isRequired: false,
+          ),
+
+          SizedBox(height: 3.h),
+
+          // Address
+          _buildTextField(
+            context,
+            'Service Address',
+            'Where will the service take place?',
+            _addressController,
+            _addressFocus,
+            'location_on',
+            maxLines: 2,
+            isRequired: true,
           ),
 
           SizedBox(height: 3.h),

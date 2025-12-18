@@ -313,16 +313,15 @@ Future<void> signUp({
     }
 
     final response = await client.from('clients').insert({
-      // 🔴 RLS ke liye sab se important line:
-      'user_id':
-          user.id, // ya default ka sahara lene ho to isse bhi hata sakte ho
-
+      'user_id': user.id,
+      'full_name': fullName,
+      'phone': phone,
+      'email': email,
+      'address': address,
       'emergency_contact_name': emergencyContactName,
       'emergency_contact_phone': emergencyContactPhone,
       'special_instructions': notes,
       'preferred_rate': preferredRate ?? 25.0,
-      // Agar tumhare clients table me name/phone/email/address columns hain,
-      // to yahan add kar do. Agar nahi hain to sirf upar wale hi rakhna.
     }).select('''
         id,
         user_id,

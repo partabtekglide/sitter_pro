@@ -10,6 +10,7 @@ import './widgets/empty_state_widget.dart';
 import './widgets/filter_bottom_sheet_widget.dart';
 import './widgets/search_bar_widget.dart';
 import './widgets/section_header_widget.dart';
+import './widgets/add_client_sheet.dart';
 import '../../services/supabase_service.dart';
 
 class ClientList extends StatefulWidget {
@@ -52,21 +53,21 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
 
     try {
       final clients = await SupabaseService.instance.getClients();
+      print(  'Loaded ${clients} clients from Supabase');
 
       if (!mounted) return;
 
       _allClients = clients.map<Map<String, dynamic>>((client) {
-        final profile = client['user_profiles'] ?? {};
         final pets = client['pets_kids'] as List<dynamic>? ?? [];
 
         return {
           "id": client['id'].toString(),
-          "name": (profile['full_name'] ?? '') as String,
-          "avatar": (profile['avatar_url'] ??
+          "name": (client['full_name'] ?? '') as String,
+          "avatar": (client['avatar_url'] ??
                   "https://images.unsplash.com/photo-1494790108755-2616b612b47c")
               as String,
           "semanticLabel":
-              "Client profile for ${(profile['full_name'] ?? 'Client')}",
+              "Client profile for ${(client['full_name'] ?? 'Client')}",
           "serviceTypes": <String>[
             // Placeholder until you have real service types in DB
             "Babysitting"
@@ -75,9 +76,9 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
           "upcomingBookingDate": null, // later: client['upcoming_booking_date']
           "hasOverduePayment":
               (client['has_overdue_payment'] as bool?) ?? false,
-          "phone": (profile['phone'] ?? '') as String,
-          "email": (profile['email'] ?? '') as String,
-          "address": (profile['address'] ?? '') as String,
+          "phone": (client['phone'] ?? '') as String,
+          "email": (client['email'] ?? '') as String,
+          "address": (client['address'] ?? '') as String,
           "bookingFrequency": "Occasional",
           "pets": pets
               .map((pet) =>
@@ -263,14 +264,48 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
     );
   }
 
-  void _navigateToAddClient() {
-    // For now, show coming soon message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add Client feature coming soon'),
-        duration: Duration(seconds: 2),
-      ),
+  Future<void> _navigateToAddClient() async {
+    final result = await showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AddClientSheet(),
     );
+
+    if (result == null || !mounted) return;
+
+    try {
+      // 1) Supabase me client create karo
+      final createdClient = await SupabaseService.instance.createInlineClient(
+        fullName: result['name'] ?? '',
+        phone: result['phone'] ?? '',
+        email: result['email'] ?? '',
+        address: result['address'] ?? '',
+        emergencyContactName: result['emergency_contact'],
+        emergencyContactPhone: result['emergency_phone'],
+        notes: result['notes'],
+        preferredRate: 25.0, // Default rate
+      );
+
+      // 2) List refresh karo
+      await _loadClients();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Client ${result['name']} added successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to create client: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _handleClientAction(String action, Map<String, dynamic> client) {
