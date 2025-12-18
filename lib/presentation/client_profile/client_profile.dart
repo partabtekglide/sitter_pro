@@ -8,6 +8,7 @@ import './widgets/client_info_card.dart';
 import './widgets/emergency_contacts_widget.dart';
 import './widgets/notes_widget.dart';
 import './widgets/pets_kids_widget.dart';
+import './edit_client_screen.dart';
 import '../../services/supabase_service.dart';
 
 class ClientProfile extends StatefulWidget {
@@ -24,7 +25,7 @@ class _ClientProfileState extends State<ClientProfile>
   bool _isDataLoaded = false;
 
   // Mock data for other sections (keep these for now or fetch if available)
-  final List<Map<String, dynamic>> _emergencyContacts = [
+  List<Map<String, dynamic>> _emergencyContacts = [
     {
       "id": 1,
       "name": "Michael Johnson",
@@ -145,7 +146,23 @@ class _ClientProfileState extends State<ClientProfile>
         "preferredServices": args['serviceTypes'] ?? [],
         "specialInstructions": args['specialInstructions'] ??
             "No special instructions provided.",
+        "emergency_contact_name": args['emergency_contact_name'],
+        "emergency_contact_phone": args['emergency_contact_phone'],
       };
+
+      // Handle emergency contacts
+      if (args['emergency_contact_name'] != null) {
+        _emergencyContacts = [
+          {
+            "id": 1,
+            "name": args['emergency_contact_name'],
+            "relationship": "Emergency Contact",
+            "phone": args['emergency_contact_phone'] ?? '',
+          }
+        ];
+      } else {
+        _emergencyContacts = [];
+      }
 
       // Handle pets
       if (args['rawPets'] != null && args['rawPets'] is List) {
@@ -569,13 +586,33 @@ class _ClientProfileState extends State<ClientProfile>
   }
 
   // Action Methods
-  void _editClient() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Edit client feature coming soon'),
-        duration: Duration(seconds: 2),
+  Future<void> _editClient() async {
+    final updatedData = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditClientScreen(clientData: _clientData),
       ),
     );
+
+    if (updatedData != null && updatedData is Map<String, dynamic>) {
+      setState(() {
+        _clientData = updatedData;
+        
+        // Update emergency contacts list
+        if (updatedData['emergency_contact_name'] != null) {
+          _emergencyContacts = [
+            {
+              "id": 1,
+              "name": updatedData['emergency_contact_name'],
+              "relationship": "Emergency Contact",
+              "phone": updatedData['emergency_contact_phone'] ?? '',
+            }
+          ];
+        } else {
+          _emergencyContacts = [];
+        }
+      });
+    }
   }
 
   void _callClient() {

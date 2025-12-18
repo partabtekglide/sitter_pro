@@ -302,6 +302,31 @@ Future<void> signUp({
     return List<Map<String, dynamic>>.from(response);
   }
 
+  Future<void> updateClient({
+    required String clientId,
+    required String fullName,
+    required String phone,
+    required String email,
+    required String address,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
+    String? notes,
+  }) async {
+    try {
+      await client.from('clients').update({
+        'full_name': fullName,
+        'phone': phone,
+        'email': email,
+        'address': address,
+        'emergency_contact_name': emergencyContactName,
+        'emergency_contact_phone': emergencyContactPhone,
+        'special_instructions': notes,
+      }).eq('id', clientId);
+    } catch (error) {
+      throw Exception('Update client failed: $error');
+    }
+  }
+
   Future<Map<String, dynamic>> createInlineClient({
     required String fullName,
     required String phone,
