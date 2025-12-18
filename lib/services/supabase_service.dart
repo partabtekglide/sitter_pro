@@ -351,6 +351,63 @@ Future<void> signUp({
     return response;
   }
 
+  // Client Notes Methods
+  Future<List<Map<String, dynamic>>> getClientNotes(String clientId) async {
+    try {
+      final response = await client
+          .from('client_notes')
+          .select()
+          .eq('client_id', clientId)
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (error) {
+      throw Exception('Get client notes failed: $error');
+    }
+  }
+
+  Future<Map<String, dynamic>> addClientNote({
+    required String clientId,
+    required String content,
+  }) async {
+    try {
+      final response = await client
+          .from('client_notes')
+          .insert({
+            'client_id': clientId,
+            'content': content,
+          })
+          .select()
+          .single();
+      return response;
+    } catch (error) {
+      throw Exception('Add client note failed: $error');
+    }
+  }
+
+  Future<void> deleteClientNote(String noteId) async {
+    try {
+      await client.from('client_notes').delete().eq('id', noteId);
+    } catch (error) {
+      throw Exception('Delete client note failed: $error');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateClientNote({
+    required String noteId,
+    required String content,
+  }) async {
+    try {
+      final response = await client
+          .from('client_notes')
+          .update({'content': content})
+          .eq('id', noteId)
+          .select()
+          .single();
+      return response;
+    } catch (error) {
+      throw Exception('Update client note failed: $error');
+    }
+  }
   Future<Map<String, dynamic>?> getClientById(String clientId) async {
     try {
       final response = await client.from('clients').select('''

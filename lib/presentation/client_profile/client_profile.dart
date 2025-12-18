@@ -38,15 +38,8 @@ class _ClientProfileState extends State<ClientProfile>
   List<Map<String, dynamic>> _bookings = [];
   bool _isLoadingBookings = false;
 
-  List<Map<String, dynamic>> _notes = [
-    {
-      "id": 1,
-      "content":
-          "Sarah is very organized and always leaves detailed instructions. The pets are well-trained and the house is always clean.",
-      "timestamp": "2024-11-09T14:30:00Z",
-      "isRichText": false,
-    },
-  ];
+  List<Map<String, dynamic>> _notes = [];
+  bool _isLoadingNotes = false;
 
   @override
   void initState() {
@@ -131,6 +124,7 @@ class _ClientProfileState extends State<ClientProfile>
         _initializeData(args);
         // Load bookings immediately after initializing data
         _loadBookings();
+        _loadNotes();
       }
       _isDataLoaded = true;
     }
@@ -341,15 +335,17 @@ class _ClientProfileState extends State<ClientProfile>
                       ),
 
                 // Notes Tab
-                SingleChildScrollView(
-                  padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
-                  child: NotesWidget(
-                    notes: _notes,
-                    onAddNote: _addNote,
-                    onEditNote: _editNote,
-                    onDeleteNote: _deleteNote,
-                  ),
-                ),
+                _isLoadingNotes
+                    ? const Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
+                        child: NotesWidget(
+                          notes: _notes,
+                          onAddNote: _addNote,
+                          onEditNote: _editNote,
+                          onDeleteNote: _deleteNote,
+                        ),
+                      ),
               ],
             ),
           ),
@@ -681,42 +677,144 @@ class _ClientProfileState extends State<ClientProfile>
     );
   }
 
-  void _addNote(String content) {
+  Future<void> _loadNotes() async {
+    if (_clientData['id'] == null) return;
+
     setState(() {
-      _notes.insert(0, {
-        "id": _notes.length + 1,
-        "content": content,
-        "timestamp": DateTime.now().toIso8601String(),
-        "isRichText": false,
+      _isLoadingNotes = true;
+    });
+
+    try {
+      final rawNotes = await SupabaseService.instance.getClientNotes(
+        _clientData['id'].toString(),
+      );
+
+      if (mounted) {
+        setState(() {
+          _notes = rawNotes.map((n) {
+            return {
+              "id": n['id'],
+              "content": n['content'],
+              "timestamp": n['created_at'],
+              "isRichText": false,
+            };
+          }).toList();
+          _isLoadingNotes = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading client notes: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingNotes = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _addNote(String content) async {
+    if (_clientData['id'] == null) return;
+
+    try {
+      final newNote = await SupabaseService.instance.addClientNote(
+        clientId: _clientData['id'].toString(),
+        content: content,
+      );
+
+      setState(() {
+        _notes.insert(0, {
+          "id": newNote['id'],
+          "content": newNote['content'],
+          "timestamp": newNote['created_at'],
+          "isRichText": false,
+        });
       });
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Note added successfully'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Note added successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add note: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
-  void _editNote(Map<String, dynamic> note) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Edit note feature coming soon'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+  Future<void> _editNote(Map<String, dynamic> note) async {
+    try {
+      final updatedNote = await SupabaseService.instance.updateClientNote(
+        noteId: note['id'].toString(),
+        content: note['content'],
+      );
+
+      setState(() {
+        final index = _notes.indexWhere((n) => n["id"] == note["id"]);
+        if (index != -1) {
+          _notes[index] = {
+            "id": updatedNote['id'],
+            "content": updatedNote['content'],
+            "timestamp": updatedNote['created_at'],
+            "isRichText": false,
+          };
+        }
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Note updated successfully'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update note: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
-  void _deleteNote(Map<String, dynamic> note) {
-    setState(() {
-      _notes.removeWhere((n) => n["id"] == note["id"]);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Note deleted'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+  Future<void> _deleteNote(Map<String, dynamic> note) async {
+    try {
+      await SupabaseService.instance.deleteClientNote(note['id'].toString());
+
+      setState(() {
+        _notes.removeWhere((n) => n["id"] == note["id"]);
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Note deleted'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete note: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _createNewBooking() {
