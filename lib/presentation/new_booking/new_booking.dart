@@ -251,8 +251,8 @@ class _NewBookingState extends State<NewBooking> {
         return _bookingData['startDate'] != null &&
             _bookingData['startTime'] != null;
 
-      case 3: // Booking details (optional)
-        return true;
+      case 3: // Booking details
+        return _bookingData['address']?.toString().isNotEmpty ?? false;
 
       case 4: // Rate calculation
         final total = _bookingData['totalAmount'];
@@ -583,6 +583,7 @@ class _NewBookingState extends State<NewBooking> {
 
                         // Step 4: Booking Details
                         BookingDetailsWidget(
+                          address: (_bookingData['address'] ?? '') as String,
                           serviceType:
                               (_bookingData['serviceType'] ?? '') as String,
                           specialInstructions:

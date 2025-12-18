@@ -5,6 +5,7 @@ import '../../../core/app_export.dart';
 import '../../../widgets/custom_icon_widget.dart';
 
 class BookingDetailsWidget extends StatefulWidget {
+  final String address;
   final String serviceType;
   final String specialInstructions;
   final String petDetails;
@@ -13,6 +14,7 @@ class BookingDetailsWidget extends StatefulWidget {
 
   const BookingDetailsWidget({
     super.key,
+    required this.address,
     required this.serviceType,
     required this.specialInstructions,
     required this.petDetails,
@@ -25,10 +27,13 @@ class BookingDetailsWidget extends StatefulWidget {
 }
 
 class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
+  final TextEditingController _addressController = TextEditingController();
   final TextEditingController _instructionsController = TextEditingController();
   final TextEditingController _petDetailsController = TextEditingController();
   final TextEditingController _emergencyContactController =
       TextEditingController();
+  
+  final FocusNode _addressFocus = FocusNode();
   final FocusNode _instructionsFocus = FocusNode();
   final FocusNode _petDetailsFocus = FocusNode();
   final FocusNode _emergencyContactFocus = FocusNode();
@@ -36,10 +41,12 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
   @override
   void initState() {
     super.initState();
+    _addressController.text = widget.address;
     _instructionsController.text = widget.specialInstructions;
     _petDetailsController.text = widget.petDetails;
     _emergencyContactController.text = widget.emergencyContact;
 
+    _addressController.addListener(_updateDetails);
     _instructionsController.addListener(_updateDetails);
     _petDetailsController.addListener(_updateDetails);
     _emergencyContactController.addListener(_updateDetails);
@@ -47,9 +54,12 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
 
   @override
   void dispose() {
+    _addressController.dispose();
     _instructionsController.dispose();
     _petDetailsController.dispose();
     _emergencyContactController.dispose();
+    
+    _addressFocus.dispose();
     _instructionsFocus.dispose();
     _petDetailsFocus.dispose();
     _emergencyContactFocus.dispose();
@@ -58,6 +68,7 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
 
   void _updateDetails() {
     widget.onDetailsUpdated({
+      'address': _addressController.text,
       'specialInstructions': _instructionsController.text,
       'petDetails': _petDetailsController.text,
       'emergencyContact': _emergencyContactController.text,
@@ -95,6 +106,20 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
           _buildTemplateSection(context),
 
           SizedBox(height: 4.h),
+
+          // Address
+          _buildTextField(
+            context,
+            'Service Address',
+            'Where will the service take place?',
+            _addressController,
+            _addressFocus,
+            'location_on',
+            maxLines: 2,
+            isRequired: true,
+          ),
+
+          SizedBox(height: 3.h),
 
           // Special Instructions
           _buildTextField(

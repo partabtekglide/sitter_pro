@@ -21,7 +21,47 @@ class SupabaseService {
   SupabaseClient get client => Supabase.instance.client;
 
   // Add SignUp method
-  Future<void> signUp({
+  // Future<void> signUp({
+  //   required String email,
+  //   required String password,
+  //   required String fullName,
+  //   String? phone,
+  //   String? address,
+  //   String role = 'client',
+  // }) async {
+  //   try {
+  //     // Sign up user with Supabase Auth
+  //     final authResponse = await client.auth.signUp(
+  //       email: email,
+  //       password: password,
+  //     );
+
+  //     if (authResponse.user != null) {
+  //       // Create user profile
+  //       await client.from('user_profiles').insert({
+  //         'id': authResponse.user!.id,
+  //         'email': email,
+  //         'full_name': fullName,
+  //         'phone': phone,
+  //         'address': address,
+  //         'role': role,
+  //         'is_active': true,
+  //       });
+
+  //       // If role is client, also create client record
+  //       if (role == 'client') {
+  //         await client.from('clients').insert({
+  //           'user_id': authResponse.user!.id,
+  //         });
+  //       }
+  //     } else {
+  //       throw Exception('Failed to create user account');
+  //     }
+  //   } catch (error) {
+  //     rethrow;
+  //   }
+  // }
+Future<void> signUp({
     required String email,
     required String password,
     required String fullName,
@@ -30,38 +70,51 @@ class SupabaseService {
     String role = 'client',
   }) async {
     try {
-      // Sign up user with Supabase Auth
+      // 1. Sign up user (PASS DATA HERE for the Trigger)
       final authResponse = await client.auth.signUp(
         email: email,
         password: password,
-      );
-
-      if (authResponse.user != null) {
-        // Create user profile
-        await client.from('user_profiles').insert({
-          'id': authResponse.user!.id,
-          'email': email,
+        data: {
           'full_name': fullName,
+          'role': role.toLowerCase(),
           'phone': phone,
           'address': address,
-          'role': role,
-          'is_active': true,
-        });
+        },
+      );
 
-        // If role is client, also create client record
-        if (role == 'client') {
-          await client.from('clients').insert({
-            'user_id': authResponse.user!.id,
-          });
-        }
-      } else {
-        throw Exception('Failed to create user account');
+      // Check if user creation failed
+      if (authResponse.user == null) {
+        throw 'Sign up failed. Please check your email/password.';
       }
-    } catch (error) {
-      rethrow;
+      
+      final userId = authResponse.user!.id;
+
+      // Note: Hum 'user_profiles' mein insert nahi kar rahe, 
+      // kyunki Step 1 wala SQL Trigger wo kaam khud kar lega.
+
+      // 2. Client Table (Optional: Add a small delay to ensure profile is ready)
+      if (role == 'client') {
+        // Thoda wait karte hain taaki Session set ho jaye
+        await Future.delayed(const Duration(milliseconds: 500)); 
+        
+        await client.from('clients').insert({
+          'user_id': userId,
+          'full_name': fullName,
+          'email': email,
+          'phone': phone,
+          'address': address,
+        });
+      }
+    } on AuthException catch (e) {
+      throw e.message;
+    } catch (e) {
+      // Agar 'users_profile' pehle se ban gaya (trigger se) aur hum duplicate try karein
+      if (e.toString().contains('duplicate key')) {
+        return; // Ignore duplicate error, matlab kaam ho gaya
+      }
+      throw 'Error: $e';
     }
   }
-
   // Authentication Methods
   Future<AuthResponse> signIn({
     required String email,

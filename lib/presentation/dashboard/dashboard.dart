@@ -52,7 +52,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
     try {
       // Load dashboard statistics
       final stats = await SupabaseService.instance.getDashboardStats();
-
+      print(  'Loaded dashboard stats: $stats');
       // Load today's appointments
       final today = DateTime.now();
       final appointments = await SupabaseService.instance.getBookings(
@@ -62,6 +62,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
 
       // Load notifications as recent activities
       final notifications = await SupabaseService.instance.getNotifications();
+      print('Loaded ${appointments.length} appointments and ${notifications.length} notifications');
 
       if (mounted) {
         setState(() {

@@ -70,13 +70,20 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
+      final String? phoneValue = _phoneController.text.trim().isEmpty 
+        ? null 
+        : _phoneController.text.trim();
+        
+    final String? addressValue = _addressController.text.trim().isEmpty 
+        ? null 
+        : _addressController.text.trim();
       // Create auth user
       await SupabaseService.instance.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         fullName: _fullNameController.text.trim(),
-        phone: _phoneController.text.trim(),
-        address: _addressController.text.trim(),
+        phone: phoneValue,     // Ab ye Sahi Null ya Value jayega
+        address: addressValue, // Ab ye Sahi Null ya Value jayega
         role: _selectedRole,
       );
 
@@ -118,6 +125,7 @@ class _SignupScreenState extends State<SignupScreen> {
       if (mounted) {
         setState(() {
           // Set specific field errors based on error message
+          print('error msg'+ errorMessage);
           if (errorMessage.contains('email')) {
             _emailError = 'This email is already registered';
           } else if (errorMessage.contains('password')) {
