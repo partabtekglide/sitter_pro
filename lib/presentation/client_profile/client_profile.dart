@@ -8,6 +8,7 @@ import './widgets/client_info_card.dart';
 import './widgets/emergency_contacts_widget.dart';
 import './widgets/notes_widget.dart';
 import './widgets/pets_kids_widget.dart';
+import '../../services/supabase_service.dart';
 
 class ClientProfile extends StatefulWidget {
   const ClientProfile({super.key});
@@ -19,25 +20,10 @@ class ClientProfile extends StatefulWidget {
 class _ClientProfileState extends State<ClientProfile>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  Map<String, dynamic> _clientData = {};
+  bool _isDataLoaded = false;
 
-  // Mock client data
-  final Map<String, dynamic> _clientData = {
-    "id": 1,
-    "name": "Sarah Johnson",
-    "phone": "(555) 123-4567",
-    "email": "sarah.johnson@email.com",
-    "address": "1234 Maple Street, Springfield, IL 62701",
-    "avatar":
-        "https://img.rocket.new/generatedImages/rocket_gen_img_126100cab-1762273569433.png",
-    "avatarSemanticLabel":
-        "Professional headshot of a woman with shoulder-length brown hair wearing a navy blue blazer, smiling at the camera against a neutral background",
-    "joinDate": "2024-03-15",
-    "totalBookings": 12,
-    "preferredServices": ["Pet Sitting", "Dog Walking"],
-    "specialInstructions":
-        "Please use the side gate entrance. Dogs are very friendly but excited when meeting new people.",
-  };
-
+  // Mock data for other sections (keep these for now or fetch if available)
   final List<Map<String, dynamic>> _emergencyContacts = [
     {
       "id": 1,
@@ -45,105 +31,12 @@ class _ClientProfileState extends State<ClientProfile>
       "relationship": "Husband",
       "phone": "(555) 123-4568",
     },
-    {
-      "id": 2,
-      "name": "Dr. Emily Chen",
-      "relationship": "Veterinarian",
-      "phone": "(555) 987-6543",
-    },
   ];
 
-  final List<Map<String, dynamic>> _petsKids = [
-    {
-      "id": 1,
-      "name": "Max",
-      "type": "Pet",
-      "breed": "Golden Retriever",
-      "age": 3,
-      "image":
-          "https://images.unsplash.com/photo-1633722714057-aaa9bf7f2383",
-      "imageSemanticLabel":
-          "Golden retriever dog sitting outdoors on grass with tongue out, looking happy and alert",
-      "specialNotes": "Loves treats, needs medication twice daily",
-      "medicalInfo":
-          "Takes arthritis medication morning and evening. Allergic to chicken-based treats.",
-      "vetInfo": "Dr. Emily Chen - Springfield Animal Hospital",
-    },
-    {
-      "id": 2,
-      "name": "Luna",
-      "type": "Pet",
-      "breed": "Persian Cat",
-      "age": 2,
-      "image":
-          "https://images.unsplash.com/photo-1632300218303-069300b05723",
-      "imageSemanticLabel":
-          "White Persian cat with long fluffy fur sitting elegantly, looking directly at camera with bright blue eyes",
-      "specialNotes": "Shy with strangers, hides under bed",
-      "medicalInfo": "Regular grooming needed. No known allergies.",
-      "vetInfo": "Dr. Emily Chen - Springfield Animal Hospital",
-    },
-    {
-      "id": 3,
-      "name": "Emma",
-      "type": "Child",
-      "age": 8,
-      "image":
-          "https://images.unsplash.com/photo-1615473137677-d7e7b93e80ec",
-      "imageSemanticLabel":
-          "Young girl with curly brown hair wearing a pink sweater, smiling brightly while sitting at a desk with books",
-      "specialNotes": "Bedtime at 8 PM, loves reading stories",
-      "medicalInfo": "No known allergies. Takes vitamins with breakfast.",
-    },
-  ];
+  List<Map<String, dynamic>> _petsKids = [];
 
-  final List<Map<String, dynamic>> _bookings = [
-    {
-      "id": 1,
-      "service": "Pet Sitting",
-      "date": "2024-11-10",
-      "time": "9:00 AM - 6:00 PM",
-      "duration": "9",
-      "amount": "\$180",
-      "status": "Completed",
-      "paymentStatus": "Paid",
-      "notes":
-          "Max was great today! Took him for two long walks and he enjoyed playing in the backyard.",
-    },
-    {
-      "id": 2,
-      "service": "Dog Walking",
-      "date": "2024-11-08",
-      "time": "12:00 PM - 1:00 PM",
-      "duration": "1",
-      "amount": "\$25",
-      "status": "Completed",
-      "paymentStatus": "Paid",
-    },
-    {
-      "id": 3,
-      "service": "Pet Sitting",
-      "date": "2024-11-05",
-      "time": "8:00 AM - 7:00 PM",
-      "duration": "11",
-      "amount": "\$220",
-      "status": "Completed",
-      "paymentStatus": "Pending",
-      "notes": "Both pets did well. Luna came out from hiding after an hour.",
-    },
-    {
-      "id": 4,
-      "service": "Babysitting",
-      "date": "2024-11-15",
-      "time": "6:00 PM - 11:00 PM",
-      "duration": "5",
-      "amount": "\$100",
-      "status": "Confirmed",
-      "paymentStatus": "Pending",
-      "notes":
-          "Emma's bedtime routine: story, brush teeth, lights out by 8 PM.",
-    },
-  ];
+  List<Map<String, dynamic>> _bookings = [];
+  bool _isLoadingBookings = false;
 
   List<Map<String, dynamic>> _notes = [
     {
@@ -153,19 +46,159 @@ class _ClientProfileState extends State<ClientProfile>
       "timestamp": "2024-11-09T14:30:00Z",
       "isRichText": false,
     },
-    {
-      "id": 2,
-      "content":
-          "Remember to check the back door lock - it sometimes doesn't latch properly. Sarah mentioned this during our last conversation.",
-      "timestamp": "2024-11-07T10:15:00Z",
-      "isRichText": false,
-    },
   ];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+  }
+
+  Future<void> _loadBookings() async {
+    if (_clientData['id'] == null) return;
+
+    setState(() {
+      _isLoadingBookings = true;
+    });
+
+    try {
+      final rawBookings = await SupabaseService.instance.getBookings(
+        clientId: _clientData['id'].toString(),
+      );
+
+      final formatted = rawBookings.map((b) {
+        return {
+          "id": b['id'],
+          "service": _formatServiceType(b['service_type']),
+          "date": b['start_date'],
+          "time": "${_formatTime(b['start_time'])} - ${_formatTime(b['end_time'] ?? '')}",
+          "duration": b['duration_hours']?.toString() ?? "0",
+          "amount": "\$${b['total_amount']?.toString() ?? '0'}",
+          "status": _capitalize(b['status'] ?? 'pending'),
+          "paymentStatus": "Pending", // TODO: Add payment status to DB
+          "notes": b['special_instructions'] ?? "",
+        };
+      }).toList();
+      print("formatted: $formatted"); 
+      if (mounted) {
+        setState(() {
+          _bookings = formatted;
+          _isLoadingBookings = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading client bookings: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingBookings = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load bookings: $e')),
+        );
+      }
+    }
+  }
+
+  String _formatServiceType(String? type) {
+    if (type == null) return 'Service';
+    return type.split('_').map((word) => _capitalize(word)).join(' ');
+  }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
+  }
+
+  String _formatTime(String time) {
+    if (time.isEmpty) return '';
+    try {
+      final parts = time.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      final dt = DateTime(2022, 1, 1, hour, minute);
+      return TimeOfDay.fromDateTime(dt).format(context);
+    } catch (e) {
+      return time;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isDataLoaded) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null && args is Map<String, dynamic>) {
+        _initializeData(args);
+        // Load bookings immediately after initializing data
+        _loadBookings();
+      }
+      _isDataLoaded = true;
+    }
+  }
+
+  void _initializeData(Map<String, dynamic> args) {
+    setState(() {
+      _clientData = {
+        "id": args['id'],
+        "name": args['name'] ?? 'Unknown Client',
+        "phone": args['phone'] ?? '',
+        "email": args['email'] ?? '',
+        "address": args['address'] ?? '',
+        "avatar": args['avatar'],
+        "avatarSemanticLabel": args['semanticLabel'],
+        "joinDate": args['joinDate'] ?? "2024-01-01",
+        "totalBookings": 0, // Placeholder
+        "preferredServices": args['serviceTypes'] ?? [],
+        "specialInstructions": args['specialInstructions'] ??
+            "No special instructions provided.",
+      };
+
+      // Handle pets
+      if (args['rawPets'] != null && args['rawPets'] is List) {
+        final petsList = args['rawPets'] as List;
+        _petsKids = petsList.map((pet) {
+          return {
+            "id": pet['id'],
+            "name": pet['name'] ?? 'Unknown',
+            "type": pet['type'] ?? 'Pet',
+            "breed": "Unknown", // Not in DB yet
+            "age": 0, // Not in DB yet
+            "image": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee",
+            "imageSemanticLabel": "${pet['name']} the ${pet['type']}",
+            "specialNotes": "",
+            "medicalInfo": "",
+            "vetInfo": "",
+          };
+        }).toList();
+      } else if (args['pets'] != null && args['pets'] is List) {
+        // Fallback to parsing strings if rawPets not available
+        final petsList = args['pets'] as List;
+        _petsKids = petsList.asMap().entries.map((entry) {
+          final petString = entry.value.toString();
+          String name = petString;
+          String type = 'Pet';
+          
+          if (petString.contains('(')) {
+            final parts = petString.split('(');
+            name = parts[0].trim();
+            type = parts[1].replaceAll(')', '').trim();
+          }
+
+          return {
+            "id": entry.key,
+            "name": name,
+            "type": type,
+            "breed": "Unknown",
+            "age": 0,
+            "image": "https://images.unsplash.com/photo-1583337130417-3346a1be7dee",
+            "imageSemanticLabel": "$name the $type",
+            "specialNotes": "",
+            "medicalInfo": "",
+            "vetInfo": "",
+          };
+        }).toList();
+      }
+    });
   }
 
   @override
@@ -239,7 +272,7 @@ class _ClientProfileState extends State<ClientProfile>
               controller: _tabController,
               tabs: const [
                 Tab(text: 'Overview'),
-                Tab(text: 'Pets/Kids'),
+                // Tab(text: 'Pets/Kids'),
                 Tab(text: 'Bookings'),
                 Tab(text: 'Notes'),
               ],
@@ -284,26 +317,28 @@ class _ClientProfileState extends State<ClientProfile>
                 ),
 
                 // Pets/Kids Tab
-                SingleChildScrollView(
-                  padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
-                  child: PetsKidsWidget(
-                    petsKids: _petsKids,
-                    onPetKidTap: _viewPetKidProfile,
-                    onLongPress: _showPetKidOptions,
-                  ),
-                ),
+                // SingleChildScrollView(
+                //   padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
+                //   child: PetsKidsWidget(
+                //     petsKids: _petsKids,
+                //     onPetKidTap: _viewPetKidProfile,
+                //     onLongPress: _showPetKidOptions,
+                //   ),
+                // ),
 
                 // Bookings Tab
-                SingleChildScrollView(
-                  padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
-                  child: BookingsTimelineWidget(
-                    bookings: _bookings,
-                    onBookingTap: _viewBookingDetails,
-                    onDuplicate: _duplicateBooking,
-                    onInvoice: _generateInvoice,
-                    onMarkPaid: _markBookingPaid,
-                  ),
-                ),
+                _isLoadingBookings
+                    ? const Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
+                        child: BookingsTimelineWidget(
+                          bookings: _bookings,
+                          onBookingTap: _viewBookingDetails,
+                          onDuplicate: _duplicateBooking,
+                          onInvoice: _generateInvoice,
+                          onMarkPaid: _markBookingPaid,
+                        ),
+                      ),
 
                 // Notes Tab
                 SingleChildScrollView(

@@ -174,6 +174,7 @@ Future<void> signUp({
   // Booking Methods
   Future<List<Map<String, dynamic>>> getBookings({
     String? status,
+    String? clientId,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -189,6 +190,10 @@ Future<void> signUp({
 
       if (status != null) {
         query = query.eq('status', status);
+      }
+
+      if (clientId != null) {
+        query = query.eq('client_id', clientId);
       }
 
       if (startDate != null) {
