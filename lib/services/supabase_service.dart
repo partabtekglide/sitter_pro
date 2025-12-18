@@ -228,6 +228,9 @@ Future<void> signUp({
     required double hourlyRate,
     required String address,
     String? specialInstructions,
+    bool isRecurring = false,
+    String? recurrenceRule,
+    DateTime? recurrenceEndDate,
   }) async {
     try {
       final duration = _calculateDuration(startTime, endTime ?? startTime);
@@ -248,6 +251,9 @@ Future<void> signUp({
             'duration_hours': duration,
             'address': address,
             'special_instructions': specialInstructions,
+            'is_recurring': isRecurring,
+            'recurrence_rule': recurrenceRule,
+            'recurrence_end_date': recurrenceEndDate?.toIso8601String().split('T')[0],
             'status': 'pending',
           })
           .select()

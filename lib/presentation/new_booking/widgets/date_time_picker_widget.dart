@@ -32,6 +32,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
   TimeOfDay? _selectedEndTime;
   bool _isRecurring = false;
   String _recurringPattern = 'weekly';
+  DateTime? _recurrenceEndDate;
 
   @override
   void initState() {
@@ -40,6 +41,24 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     _selectedEndDate = widget.endDate;
     _selectedStartTime = widget.startTime;
     _selectedEndTime = widget.endTime;
+    // Default recurrence end date to 1 month from now if not set
+    _recurrenceEndDate = DateTime.now().add(const Duration(days: 30));
+  }
+
+  Future<void> _selectRecurrenceEndDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _recurrenceEndDate ?? DateTime.now().add(const Duration(days: 30)),
+      firstDate: _selectedStartDate ?? DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _recurrenceEndDate = picked;
+      });
+      _updateDateTime();
+    }
   }
 
   void _updateDateTime() {
@@ -75,6 +94,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
       'duration': duration,
       'isRecurring': _isRecurring,
       'recurringPattern': _recurringPattern,
+      'recurrenceEndDate': _recurrenceEndDate,
     });
   }
 
@@ -512,6 +532,17 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
                 ),
               ],
             ),
+          ),
+          SizedBox(height: 2.h),
+          _buildDateTimeCard(
+            context,
+            'Repeat Until',
+            _recurrenceEndDate != null
+                ? _formatDate(_recurrenceEndDate!)
+                : 'Select end date',
+            'event_repeat',
+            _selectRecurrenceEndDate,
+            _recurrenceEndDate != null,
           ),
         ],
       ],
