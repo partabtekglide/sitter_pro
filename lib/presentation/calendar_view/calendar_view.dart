@@ -364,11 +364,10 @@ class _CalendarViewState extends State<CalendarView>
   }
 
   void _onMessageClient(Map<String, dynamic> appointment) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening message to ${appointment['clientName']}'),
-        duration: const Duration(seconds: 2),
-      ),
+    Navigator.pushNamed(
+      context,
+      AppRoutes.communicationHub,
+      arguments: {'clientName': appointment['clientName']},
     );
   }
 

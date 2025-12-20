@@ -209,3 +209,4 @@ CREATE TABLE public.client_notes (
   CONSTRAINT client_notes_pkey PRIMARY KEY (id),
   CONSTRAINT client_notes_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE CASCADE
 );
+
