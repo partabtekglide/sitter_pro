@@ -231,6 +231,7 @@ Future<void> signUp({
     required String startTime,
     String? endTime,
     required double hourlyRate,
+    double? totalAmount,
     required String address,
     String? specialInstructions,
     bool isRecurring = false,
@@ -239,7 +240,7 @@ Future<void> signUp({
   }) async {
     try {
       final duration = _calculateDuration(startTime, endTime ?? startTime);
-      final totalAmount = hourlyRate * duration;
+      final calculatedTotal = totalAmount ?? (hourlyRate * duration);
 
       final response = await client
           .from('bookings')
@@ -252,7 +253,7 @@ Future<void> signUp({
             'start_time': startTime,
             'end_time': endTime,
             'hourly_rate': hourlyRate,
-            'total_amount': totalAmount,
+            'total_amount': calculatedTotal,
             'duration_hours': duration,
             'address': address,
             'special_instructions': specialInstructions,
@@ -266,6 +267,54 @@ Future<void> signUp({
       return response;
     } catch (error) {
       throw Exception('Create booking failed: $error');
+    }
+  }
+
+  Future<void> updateBooking({
+    required String bookingId,
+    required String serviceType,
+    required DateTime startDate,
+    DateTime? endDate,
+    required String startTime,
+    String? endTime,
+    required double hourlyRate,
+    double? totalAmount,
+    required String address,
+    String? specialInstructions,
+    bool isRecurring = false,
+    String? recurrenceRule,
+    DateTime? recurrenceEndDate,
+  }) async {
+    try {
+      final duration = _calculateDuration(startTime, endTime ?? startTime);
+      final calculatedTotal = totalAmount ?? (hourlyRate * duration);
+
+      await client.from('bookings').update({
+        'service_type': serviceType,
+        'start_date': startDate.toIso8601String().split('T')[0],
+        'end_date': endDate?.toIso8601String().split('T')[0],
+        'start_time': startTime,
+        'end_time': endTime,
+        'hourly_rate': hourlyRate,
+        'total_amount': calculatedTotal,
+        'duration_hours': duration.ceil(),
+        'address': address,
+        'special_instructions': specialInstructions,
+        'is_recurring': isRecurring,
+        'recurrence_rule': recurrenceRule,
+        'recurrence_end_date': recurrenceEndDate?.toIso8601String().split('T')[0],
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', bookingId);
+    } catch (error) {
+      throw Exception('Update booking failed: $error');
+    }
+  }
+
+  Future<void> deleteBooking(String bookingId) async {
+    try {
+      await client.from('bookings').delete().eq('id', bookingId);
+    } catch (error) {
+      throw Exception('Delete booking failed: $error');
     }
   }
 
@@ -973,21 +1022,30 @@ Future<void> signUp({
 
   // Helper Methods
   int _calculateDuration(String startTime, String endTime) {
-    final start = _parseTime(startTime);
-    final end = _parseTime(endTime);
+    if (startTime.isEmpty) return 0;
+    if (endTime.isEmpty) endTime = startTime;
 
-    if (end.isBefore(start)) {
-      // Handle overnight bookings
-      return (24 - start.hour + end.hour);
+    try {
+      final start = _parseTime(startTime);
+      final end = _parseTime(endTime);
+
+      if (end.isBefore(start)) {
+        // Handle overnight bookings
+        return (24 - start.hour + end.hour);
+      }
+
+      return end.difference(start).inHours;
+    } catch (e) {
+      print('Error calculating duration: $e');
+      return 0;
     }
-
-    return end.difference(start).inHours;
   }
 
   DateTime _parseTime(String timeString) {
+    if (timeString.isEmpty) return DateTime.now();
     final parts = timeString.split(':');
-    final hour = int.parse(parts[0]);
-    final minute = int.parse(parts[1]);
+    final hour = parts.length > 0 ? (int.tryParse(parts[0]) ?? 0) : 0;
+    final minute = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day, hour, minute);
   }

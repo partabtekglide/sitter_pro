@@ -23,46 +23,53 @@ class _RateCalculatorWidgetState extends State<RateCalculatorWidget> {
   final TextEditingController _hourlyRateController = TextEditingController();
   final TextEditingController _additionalChargesController =
       TextEditingController();
+  final TextEditingController _totalAmountController = TextEditingController();
+  
   final FocusNode _hourlyRateFocus = FocusNode();
   final FocusNode _additionalChargesFocus = FocusNode();
+  final FocusNode _totalAmountFocus = FocusNode();
 
   double _hourlyRate = 0.0;
   double _additionalCharges = 0.0;
   double _baseAmount = 0.0;
   double _totalAmount = 0.0;
   int _duration = 0;
+  bool _isUpdatingInternally = false;
 
   @override
   void initState() {
     super.initState();
     _initializeData();
 
-    // User jaise hi value change kare, total recalc ho
-    _hourlyRateController.addListener(_calculateTotal);
-    _additionalChargesController.addListener(_calculateTotal);
+    _hourlyRateController.addListener(_onHourlyRateChanged);
+    _additionalChargesController.addListener(_onAdditionalChargesChanged);
+    _totalAmountController.addListener(_onTotalAmountChanged);
   }
 
   @override
   void dispose() {
     _hourlyRateController.dispose();
     _additionalChargesController.dispose();
+    _totalAmountController.dispose();
     _hourlyRateFocus.dispose();
     _additionalChargesFocus.dispose();
+    _totalAmountFocus.dispose();
     super.dispose();
   }
 
-  /// Pehli dafa data set karna (yahan setState ki zaroorat nahi)
   void _initializeData() {
     _hourlyRate = (widget.bookingData['hourlyRate'] as num?)?.toDouble() ?? 20.0;
     _duration = (widget.bookingData['duration'] as int?) ?? 1;
     _additionalCharges = 0.0;
-
     _baseAmount = _hourlyRate * _duration;
     _totalAmount = _baseAmount + _additionalCharges;
 
+    _isUpdatingInternally = true;
     _hourlyRateController.text = _hourlyRate.toStringAsFixed(2);
+    _additionalChargesController.text = _additionalCharges.toStringAsFixed(2);
+    _totalAmountController.text = _totalAmount.toStringAsFixed(2);
+    _isUpdatingInternally = false;
 
-    // Parent ko pehli dafa values batane ke liye, frame ke baad callback
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       widget.onRateCalculated({
@@ -74,26 +81,51 @@ class _RateCalculatorWidgetState extends State<RateCalculatorWidget> {
     });
   }
 
-  /// Jab user rate/charges change kare → totals recalc + parent ko notify
-  void _calculateTotal() {
-    final hourlyRateText = _hourlyRateController.text;
-    final additionalChargesText = _additionalChargesController.text;
-
-    final newHourlyRate = double.tryParse(hourlyRateText) ?? 0.0;
-    final newAdditionalCharges = double.tryParse(additionalChargesText) ?? 0.0;
-
-    final newBaseAmount = newHourlyRate * _duration;
-    final newTotalAmount = newBaseAmount + newAdditionalCharges;
-
-    // Local UI state update
+  void _onHourlyRateChanged() {
+    if (_isUpdatingInternally) return;
+    final val = double.tryParse(_hourlyRateController.text) ?? 0.0;
     setState(() {
-      _hourlyRate = newHourlyRate;
-      _additionalCharges = newAdditionalCharges;
-      _baseAmount = newBaseAmount;
-      _totalAmount = newTotalAmount;
+      _hourlyRate = val;
+      _baseAmount = _hourlyRate * _duration;
+      _totalAmount = _baseAmount + _additionalCharges;
+      
+      _isUpdatingInternally = true;
+      _totalAmountController.text = _totalAmount.toStringAsFixed(2);
+      _isUpdatingInternally = false;
     });
+    _notifyParent();
+  }
 
-    // Parent me setState ko build ke baad run karo
+  void _onAdditionalChargesChanged() {
+    if (_isUpdatingInternally) return;
+    final val = double.tryParse(_additionalChargesController.text) ?? 0.0;
+    setState(() {
+      _additionalCharges = val;
+      _totalAmount = _baseAmount + _additionalCharges;
+      
+      _isUpdatingInternally = true;
+      _totalAmountController.text = _totalAmount.toStringAsFixed(2);
+      _isUpdatingInternally = false;
+    });
+    _notifyParent();
+  }
+
+  void _onTotalAmountChanged() {
+    if (_isUpdatingInternally) return;
+    final val = double.tryParse(_totalAmountController.text) ?? 0.0;
+    setState(() {
+      _totalAmount = val;
+      // User's logic: Additional = Total - (Rate * Hours)
+      _additionalCharges = _totalAmount - _baseAmount;
+      
+      _isUpdatingInternally = true;
+      _additionalChargesController.text = _additionalCharges.toStringAsFixed(2);
+      _isUpdatingInternally = false;
+    });
+    _notifyParent();
+  }
+
+  void _notifyParent() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       widget.onRateCalculated({
@@ -544,11 +576,26 @@ class _RateCalculatorWidgetState extends State<RateCalculatorWidget> {
                   ),
                 ),
               ),
-              Text(
-                '\$${_totalAmount.toStringAsFixed(2)}',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: theme.colorScheme.primary,
+              SizedBox(
+                width: 40.w,
+                child: TextField(
+                  controller: _totalAmountController,
+                  focusNode: _totalAmountFocus,
+                  textAlign: TextAlign.right,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^-?\d*\.?\d{0,2}')),
+                  ],
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: theme.colorScheme.primary,
+                  ),
+                  decoration: InputDecoration(
+                    prefixText: '\$ ',
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
                 ),
               ),
             ],

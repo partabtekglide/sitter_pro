@@ -38,7 +38,6 @@ class _NewBookingState extends State<NewBooking> {
     'totalAmount': 0.0,
     'specialInstructions': '',
     'petDetails': '',
-    'emergencyContact': '',
     'address': '',
     'duration': 0,
     'isRecurring': false,
@@ -49,6 +48,7 @@ class _NewBookingState extends State<NewBooking> {
   // Real client data from Supabase
   List<Map<String, dynamic>> _clients = [];
   bool _isLoadingClients = true;
+  bool _isSubmitting = false;
   Map<String, dynamic>? _selectedClient;
 
   @override
@@ -86,19 +86,41 @@ class _NewBookingState extends State<NewBooking> {
         _clients = formatted;
         _isLoadingClients = false;
 
-        // Auto-select client if ID is provided in arguments
         final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-        if (args != null && args.containsKey('clientId')) {
-          final initialClientId = args['clientId'].toString();
-          final client = _clients.firstWhere(
-            (c) => c['id'] == initialClientId,
-            orElse: () => {},
-          );
-          
-          if (client.isNotEmpty) {
-            _bookingData['clientId'] = client['id'];
-            _bookingData['clientName'] = client['name'];
-            _bookingData['hourlyRate'] = client['preferredRate'];
+        if (args != null) {
+          // Check for edit mode
+          if (args.containsKey('editBooking')) {
+            final booking = args['editBooking'] as Map<String, dynamic>;
+            _bookingData = {
+              'id': booking['id'],
+              'serviceType': booking['serviceType'],
+              'clientId': (formatted.firstWhere((c) => c['name'] == booking['clientName'], orElse: () => {'id': ''}))['id'],
+              'clientName': booking['clientName'],
+              'startDate': booking['date'],
+              'startTime': booking['startTime'],
+              'endTime': booking['endTime'],
+              'hourlyRate': booking['hourlyRate'] ?? 0.0,
+              'address': booking['address'],
+              'specialInstructions': booking['notes'],
+              'totalAmount': booking['amount'],
+              'isRecurring': booking['is_recurring'],
+            };
+            // Skip to the date selection or calculation step if desired
+            // _currentStep = 2; 
+          }
+          // Check for client profile navigation
+          else if (args.containsKey('clientId')) {
+            final initialClientId = args['clientId'].toString();
+            final client = _clients.firstWhere(
+              (c) => c['id'] == initialClientId,
+              orElse: () => {},
+            );
+            
+            if (client.isNotEmpty) {
+              _bookingData['clientId'] = client['id'];
+              _bookingData['clientName'] = client['name'];
+              _bookingData['hourlyRate'] = client['preferredRate'];
+            }
           }
         }
       });
@@ -175,6 +197,7 @@ class _NewBookingState extends State<NewBooking> {
     final startTime = _bookingData['startTime'] as TimeOfDay?;
     final endTime = _bookingData['endTime'] as TimeOfDay?;
     final hourlyRate = (_bookingData['hourlyRate'] as num?)?.toDouble() ?? 0.0;
+    final totalAmount = (_bookingData['totalAmount'] as num?)?.toDouble();
     final address = _bookingData['address']?.toString() ?? '';
     final specialInstructions = _bookingData['specialInstructions']?.toString();
 
@@ -196,43 +219,51 @@ class _NewBookingState extends State<NewBooking> {
       return;
     }
 
+    setState(() => _isSubmitting = true);
     HapticFeedback.mediumImpact();
 
     try {
-      if (!mounted) return;
-
-      // Loading dialog
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator()),
-      );
-
       final currentUser = SupabaseService.instance.currentUser;
       if (currentUser == null) {
         throw Exception('User not authenticated');
       }
 
-      await SupabaseService.instance.createBooking(
-        clientId: clientId,
-        sitterId: currentUser.id,
-        serviceType: serviceType.toLowerCase().replaceAll(' ', '_'),
-        startDate: startDate,
-        endDate: endDate,
-        startTime: _formatTimeForDatabase(startTime),
-        endTime: _formatTimeForDatabase(endTime),
-        hourlyRate: hourlyRate,
-        address: address,
-        specialInstructions: specialInstructions,
-        isRecurring: _bookingData['isRecurring'] ?? false,
-        recurrenceRule: _bookingData['recurringPattern'],
-        recurrenceEndDate: _bookingData['recurrenceEndDate'],
-      );
+      if (_bookingData.containsKey('id')) {
+        await SupabaseService.instance.updateBooking(
+          bookingId: _bookingData['id'],
+          serviceType: serviceType.toLowerCase().replaceAll(' ', '_'),
+          startDate: startDate,
+          endDate: endDate,
+          startTime: _formatTimeForDatabase(startTime),
+          endTime: _formatTimeForDatabase(endTime),
+          hourlyRate: hourlyRate,
+          totalAmount: totalAmount,
+          address: address,
+          specialInstructions: specialInstructions,
+          isRecurring: _bookingData['isRecurring'] ?? false,
+          recurrenceRule: _bookingData['recurringPattern'],
+          recurrenceEndDate: _bookingData['recurrenceEndDate'],
+        );
+      } else {
+        await SupabaseService.instance.createBooking(
+          clientId: clientId,
+          sitterId: currentUser.id,
+          serviceType: serviceType.toLowerCase().replaceAll(' ', '_'),
+          startDate: startDate,
+          endDate: endDate,
+          startTime: _formatTimeForDatabase(startTime),
+          endTime: _formatTimeForDatabase(endTime),
+          hourlyRate: hourlyRate,
+          totalAmount: totalAmount,
+          address: address,
+          specialInstructions: specialInstructions,
+          isRecurring: _bookingData['isRecurring'] ?? false,
+          recurrenceRule: _bookingData['recurringPattern'],
+          recurrenceEndDate: _bookingData['recurrenceEndDate'],
+        );
+      }
 
       if (!mounted) return;
-
-      // Loading band karo
-      Navigator.of(context).pop();
 
       // Success dialog
       showDialog(
@@ -241,16 +272,17 @@ class _NewBookingState extends State<NewBooking> {
       );
     } catch (error) {
       if (!mounted) return;
-
-      // Agar error aaye to loading dialog band karo
-      Navigator.of(context).pop();
-      print( 'Error creating booking: $error');
+      print('Error processing booking: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to create booking: $error'),
+          content: Text('Error: ${error.toString().split(':').last.trim()}'),
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -361,7 +393,7 @@ class _NewBookingState extends State<NewBooking> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: CustomAppBar(
-        title: 'New Booking',
+        title: _bookingData.containsKey('id') ? 'Edit Booking' : 'New Booking',
         variant: CustomAppBarVariant.standard,
         onBackPressed: () {
           if (_currentStep > 0) {
@@ -386,6 +418,8 @@ class _NewBookingState extends State<NewBooking> {
       body: SafeArea(
         child: Column(
           children: [
+            if (_isSubmitting)
+              const LinearProgressIndicator(minHeight: 2),
             // Progress indicator
             _buildProgressIndicator(),
 
@@ -442,8 +476,6 @@ class _NewBookingState extends State<NewBooking> {
                                   as String,
                           petDetails:
                               (_bookingData['petDetails'] ?? '') as String,
-                          emergencyContact: (_bookingData['emergencyContact'] ??
-                              '') as String,
                           onDetailsUpdated: (details) {
                             _updateBookingData(details);
                           },
@@ -546,13 +578,13 @@ class _NewBookingState extends State<NewBooking> {
           Expanded(
             child: _currentStep == _totalSteps - 1
                 ? ElevatedButton.icon(
-                    onPressed: _canProceedToNext() ? _submitBooking : null,
+                    onPressed: (_canProceedToNext() && !_isSubmitting) ? _submitBooking : null,
                     icon: CustomIconWidget(
                       iconName: 'check',
                       color: theme.colorScheme.onPrimary,
                       size: 4.w,
                     ),
-                    label: const Text('Create Booking'),
+                    label: Text(_bookingData.containsKey('id') ? 'Update Booking' : 'Create Booking'),
                   )
                 : ElevatedButton.icon(
                     onPressed: _canProceedToNext() ? _nextStep : null,
@@ -581,7 +613,7 @@ class _NewBookingState extends State<NewBooking> {
             size: 6.w,
           ),
           SizedBox(width: 3.w),
-          const Text('Booking Created'),
+          Text(_bookingData.containsKey('id') ? 'Booking Updated' : 'Booking Created'),
         ],
       ),
       content: Column(
@@ -589,7 +621,9 @@ class _NewBookingState extends State<NewBooking> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Your booking has been successfully created and is now pending client confirmation!',
+            _bookingData.containsKey('id') 
+                ? 'Your booking has been successfully updated!'
+                : 'Your booking has been successfully created and is now pending client confirmation!',
             style: theme.textTheme.bodyLarge,
           ),
           SizedBox(height: 2.h),

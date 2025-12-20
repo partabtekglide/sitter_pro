@@ -9,7 +9,6 @@ class BookingDetailsWidget extends StatefulWidget {
   final String serviceType;
   final String specialInstructions;
   final String petDetails;
-  final String emergencyContact;
   final Function(Map<String, dynamic>) onDetailsUpdated;
 
   const BookingDetailsWidget({
@@ -18,7 +17,6 @@ class BookingDetailsWidget extends StatefulWidget {
     required this.serviceType,
     required this.specialInstructions,
     required this.petDetails,
-    required this.emergencyContact,
     required this.onDetailsUpdated,
   });
 
@@ -30,13 +28,10 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _instructionsController = TextEditingController();
   final TextEditingController _petDetailsController = TextEditingController();
-  final TextEditingController _emergencyContactController =
-      TextEditingController();
   
   final FocusNode _addressFocus = FocusNode();
   final FocusNode _instructionsFocus = FocusNode();
   final FocusNode _petDetailsFocus = FocusNode();
-  final FocusNode _emergencyContactFocus = FocusNode();
 
   @override
   void initState() {
@@ -44,12 +39,10 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
     _addressController.text = widget.address;
     _instructionsController.text = widget.specialInstructions;
     _petDetailsController.text = widget.petDetails;
-    _emergencyContactController.text = widget.emergencyContact;
 
     _addressController.addListener(_updateDetails);
     _instructionsController.addListener(_updateDetails);
     _petDetailsController.addListener(_updateDetails);
-    _emergencyContactController.addListener(_updateDetails);
   }
 
   @override
@@ -57,12 +50,10 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
     _addressController.dispose();
     _instructionsController.dispose();
     _petDetailsController.dispose();
-    _emergencyContactController.dispose();
     
     _addressFocus.dispose();
     _instructionsFocus.dispose();
     _petDetailsFocus.dispose();
-    _emergencyContactFocus.dispose();
     super.dispose();
   }
 
@@ -71,7 +62,6 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
       'address': _addressController.text,
       'specialInstructions': _instructionsController.text,
       'petDetails': _petDetailsController.text,
-      'emergencyContact': _emergencyContactController.text,
     });
   }
 
@@ -147,21 +137,6 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
               maxLines: 3,
               isRequired: false,
             ),
-
-          if (widget.serviceType.toLowerCase().contains('pet'))
-            SizedBox(height: 3.h),
-
-          // Emergency Contact
-          _buildTextField(
-            context,
-            'Emergency Contact',
-            'Backup contact person and phone number',
-            _emergencyContactController,
-            _emergencyContactFocus,
-            'emergency',
-            maxLines: 2,
-            isRequired: false,
-          ),
 
           SizedBox(height: 4.h),
 

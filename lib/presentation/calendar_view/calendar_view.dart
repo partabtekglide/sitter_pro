@@ -99,9 +99,11 @@ class _CalendarViewState extends State<CalendarView>
           'endTime': endTime,
           'status': booking['status'] ?? 'pending',
           'amount': (booking['total_amount'] as num?)?.toDouble() ?? 0.0,
+          'hourlyRate': (booking['hourly_rate'] as num?)?.toDouble() ?? 0.0,
           'clientPhone': client['phone'] ?? '',
           'address': booking['address'] ?? '',
           'notes': booking['special_instructions'] ?? '',
+          'is_recurring': isRecurring,
           'profileImage': client['avatar_url'] ??
               'https://images.unsplash.com/photo-1704541840921-106a1106cbb0',
         };
@@ -327,39 +329,80 @@ class _CalendarViewState extends State<CalendarView>
   }
 
   void _onCancel(Map<String, dynamic> appointment) {
+    debugPrint('Attempting to cancel appointment: ${appointment['id']}, is_recurring: ${appointment['is_recurring']}, isRecurringInstance: ${appointment['isRecurringInstance']}');
+    
+    final bool isRecurring = appointment['is_recurring'] == true || 
+                             appointment['isRecurringInstance'] == true;
+
+    if (isRecurring) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Recurring Booking'),
+          content: const Text(
+            'This is a recurring booking. For your safety, we do not allow deleting individual instances of recurring bookings yet. Please edit the series to make changes.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Cancel Appointment'),
-            content: Text(
-              'Are you sure you want to cancel the appointment with ${appointment['clientName']}?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Keep'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Appointment'),
+        content: Text(
+          'Are you sure you want to cancel and delete the appointment with ${appointment['clientName']}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Keep'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close sheet if open
+
+              try {
+                await SupabaseService.instance.deleteBooking(appointment['id']);
+                
+                if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        'Appointment with ${appointment['clientName']} cancelled',
+                        'Appointment with ${appointment['clientName']} deleted',
                       ),
                       backgroundColor: AppTheme.errorLight,
                       duration: const Duration(seconds: 2),
                     ),
                   );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.errorLight,
-                ),
-                child: const Text('Cancel'),
-              ),
-            ],
+                  _refreshCalendar(); // Refresh the list
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete booking: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorLight,
+            ),
+            child: const Text('Delete'),
           ),
+        ],
+      ),
     );
   }
 
@@ -372,14 +415,18 @@ class _CalendarViewState extends State<CalendarView>
   }
 
   void _onEditAppointment(Map<String, dynamic> appointment) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Edit ${appointment['clientName']} - Feature coming soon',
-        ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    if (appointment['is_recurring'] == true || appointment['isRecurringInstance'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Editing recurring series is coming soon.')),
+      );
+      return;
+    }
+    
+    Navigator.pushNamed(
+      context,
+      AppRoutes.newBooking,
+      arguments: {'editBooking': appointment},
+    ).then((_) => _fetchBookings());
   }
 
   void _onDuplicateAppointment(Map<String, dynamic> appointment) {
