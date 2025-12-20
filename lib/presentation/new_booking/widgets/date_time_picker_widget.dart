@@ -61,9 +61,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
         // Fetch all bookings for this sitter to check for conflicts
         final bookings = await SupabaseService.instance.getBookings(
           sitterId: user.id,
-          // We can optionally filter by date range if we want to optimize, 
-          // e.g. from today onwards.
-          startDate: DateTime.now().subtract(const Duration(days: 1)),
+          // Fetch all bookings to ensuring recurring ones from the past are included
         );
         if (mounted) {
           setState(() {
@@ -197,11 +195,12 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
                   
                   // 2. Does date match the pattern?
                   bool matches = false;
-                  if (bRule == 'daily') {
+                  final rule = bRule.toLowerCase();
+                  if (rule == 'daily') {
                     matches = true;
-                  } else if (bRule == 'weekly') {
+                  } else if (rule == 'weekly') {
                     matches = date.weekday == bDate.weekday;
-                  } else if (bRule == 'monthly') {
+                  } else if (rule == 'monthly') {
                     matches = date.day == bDate.day;
                   }
                   
@@ -215,6 +214,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
                     final instanceEnd = instanceStart.add(bDuration);
                     
                     if (slot.start.isBefore(instanceEnd) && slot.end.isAfter(instanceStart)) {
+                       print('Time Conflict found! New: ${slot.start}-${slot.end} vs Recurring: $instanceStart-$instanceEnd');
                        return true; 
                     }
                   }
