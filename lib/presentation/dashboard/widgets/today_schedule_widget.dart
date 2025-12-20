@@ -53,7 +53,7 @@ class TodayScheduleWidget extends StatelessWidget {
                 SizedBox(width: 2.w),
                 Expanded(
                   child: Text(
-                    'Today\'s Scheduleeeeee',
+                    'Today\'s Schedule',
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,

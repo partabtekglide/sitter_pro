@@ -184,7 +184,7 @@ Future<void> signUp({
             *,
             clients!inner (
               *,
-              user_profiles!inner (full_name, phone, avatar_url)
+              user_profiles (full_name, phone, avatar_url)
             ),
             sitter:user_profiles!bookings_sitter_id_fkey (full_name, phone, avatar_url)
           ''');

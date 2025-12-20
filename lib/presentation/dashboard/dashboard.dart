@@ -24,6 +24,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
   bool _isLocationEnabled = false;
   Map<String, dynamic>? _weatherData;
   late TabController _tabController;
+  String _userName = 'Sitter';
 
   // Real data from Supabase
   List<Map<String, dynamic>> _todayAppointments = [];
@@ -63,9 +64,20 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
       // Load notifications as recent activities
       final notifications = await SupabaseService.instance.getNotifications();
       print('Loaded ${appointments} appointments and ${notifications.length} notifications');
+      
+      // Get user name
+      final user = SupabaseService.instance.currentUser;
+      String userName = 'Sitter';
+      if (user != null) {
+        final profile = await SupabaseService.instance.getUserProfile(user.id);
+        if (profile != null) {
+          userName = profile['full_name'] ?? 'Sitter';
+        }
+      }
 
       if (mounted) {
         setState(() {
+          _userName = userName;
           _dashboardStats = stats;
           _todayAppointments =
               appointments
@@ -73,6 +85,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
                     (booking) => {
                       'id': booking['id'],
                       'clientName':
+                          booking['clients']?['full_name'] ??
                           booking['clients']?['user_profiles']?['full_name'] ??
                           'Unknown Client',
                       'serviceType': _formatServiceType(
@@ -344,7 +357,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
               children: [
                 // Greeting Header
                 GreetingHeaderWidget(
-                  sitterName: 'Alex Thompson',
+                  sitterName: _userName,
                   currentDate: DateTime.now(),
                 ),
 
