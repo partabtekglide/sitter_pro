@@ -222,36 +222,8 @@ class _CommunicationHubState extends State<CommunicationHub>
             // Tab Views
             Expanded(
               child: MessageComposerWidget(
-                onSendMessage: (message, client) async {
-                  if (client == null) return;
-                  
-                  final receiverId = client['user_id'];
-                  if (receiverId == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('This client does not have a linked user account for in-app messaging.')),
-                    );
-                    return;
-                  }
-
-                  try {
-                    await SupabaseService.instance.sendMessage(
-                      receiverId: receiverId,
-                      content: message,
-                      subject: 'New Message from Sitter',
-                    );
-                    
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Message sent successfully!')),
-                      );
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to send message: $e'), backgroundColor: Colors.red),
-                      );
-                    }
-                  }
+                onSendMessage: (message, client) {
+                  // Logic handled internally in MessageComposerWidget
                 },
               ),
             ),

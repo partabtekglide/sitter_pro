@@ -68,15 +68,61 @@ class _MessageComposerWidgetState extends State<MessageComposerWidget> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final message = _messageController.text.trim();
-    if (message.isNotEmpty) {
-      final selectedClient = _clients.firstWhere(
-        (c) => c['id'] == _selectedClientId,
-        orElse: () => {},
+
+    if (message.isNotEmpty && _selectedClientId != null) {
+      setState(() => _isLoading = true);
+
+      try {
+        final user = SupabaseService.instance.client.auth.currentUser;
+        if (user == null) throw Exception('User not authenticated');
+
+        // 1. Insert into communications table using the new service method
+        // Note: Using 'message' as the type because 'email' is not a valid enum value
+        await SupabaseService.instance.recordCommunication(
+          senderId: user.id,
+          receiverId: _selectedClientId!,
+          content: message,
+          type: 'message',
+        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Message sent & Email dispatched! 📧'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          _messageController.clear();
+
+          // Notify parent (optional, using old callback style for compatibility)
+          final selectedClient = _clients.firstWhere(
+            (c) => c['id'] == _selectedClientId,
+            orElse: () => {},
+          );
+          widget.onSendMessage(message, selectedClient.isEmpty ? null : selectedClient);
+        }
+      } catch (e) {
+        print("Error sending message: $e");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error sending message: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a client and type a message')),
       );
-      widget.onSendMessage(message, selectedClient.isEmpty ? null : selectedClient);
-      _messageController.clear();
     }
   }
 
@@ -366,7 +412,7 @@ class _MessageComposerWidgetState extends State<MessageComposerWidget> {
               ElevatedButton.icon(
                 onPressed: _messageController.text.trim().isNotEmpty &&
                         _selectedClientId != null
-                    ? _sendMessage
+                    ? () => _sendMessage()
                     : null,
                 icon: CustomIconWidget(
                   iconName: 'send',

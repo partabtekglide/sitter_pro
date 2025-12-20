@@ -508,6 +508,27 @@ Future<void> signUp({
     }
   }
 
+  Future<void> recordCommunication({
+    required String senderId,
+    required String receiverId,
+    required String content,
+    String type = 'message',
+  }) async {
+    try {
+      await client.from('communications').insert({
+        'sender_id': senderId,
+        'receiver_id': receiverId,
+        'content': content,
+        'type': type,
+        'is_read': false,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (error) {
+      print('Record communication error: $error');
+      throw Exception('Failed to record communication: $error');
+    }
+  }
+
   Future<void> markMessageAsRead(String messageId) async {
     try {
       await client
