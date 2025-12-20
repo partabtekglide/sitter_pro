@@ -293,6 +293,7 @@ Future<void> signUp({
   Future<List<Map<String, dynamic>>> getClients() async {
     final response = await client.from('clients').select('''
         id,
+        user_id,
         full_name,
         phone,
         email,
