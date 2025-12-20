@@ -41,6 +41,9 @@ class _NewBookingState extends State<NewBooking> {
     'emergencyContact': '',
     'address': '',
     'duration': 0,
+    'isRecurring': false,
+    'recurringPattern': 'weekly',
+    'recurrenceEndDate': null,
   };
 
   // Real client data from Supabase
@@ -205,6 +208,9 @@ class _NewBookingState extends State<NewBooking> {
         hourlyRate: hourlyRate,
         address: address,
         specialInstructions: specialInstructions,
+        isRecurring: _bookingData['isRecurring'] ?? false,
+        recurrenceRule: _bookingData['recurringPattern'],
+        recurrenceEndDate: _bookingData['recurrenceEndDate'],
       );
 
       if (!mounted) return;
@@ -222,7 +228,7 @@ class _NewBookingState extends State<NewBooking> {
 
       // Agar error aaye to loading dialog band karo
       Navigator.of(context).pop();
-
+      print( 'Error creating booking: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to create booking: $error'),
@@ -590,9 +596,14 @@ class _NewBookingState extends State<NewBooking> {
                 SizedBox(height: 1.h),
                 Text('Service: ${_bookingData['serviceType']}'),
                 Text('Client: ${_bookingData['clientName']}'),
+              if (_bookingData['isRecurring'] == true)
                 Text(
-                  'Total: \$${_bookingData['totalAmount'].toStringAsFixed(2)}',
+                  'Recurring: ${_bookingData['recurringPattern'].toString()[0].toUpperCase()}${_bookingData['recurringPattern'].toString().substring(1)}',
+                  style: TextStyle(color: theme.colorScheme.primary),
                 ),
+              Text(
+                'Total: \$${_bookingData['totalAmount'].toStringAsFixed(2)}',
+              ),
               ],
             ),
           ),

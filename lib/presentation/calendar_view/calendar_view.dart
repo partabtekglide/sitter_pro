@@ -11,6 +11,8 @@ import './widgets/day_view_widget.dart';
 import './widgets/month_view_widget.dart';
 import './widgets/week_view_widget.dart';
 
+import '../../services/supabase_service.dart';
+
 enum CalendarViewMode { month, week, day }
 
 class CalendarView extends StatefulWidget {
@@ -28,94 +30,14 @@ class _CalendarViewState extends State<CalendarView>
   DateTime _focusedDate = DateTime.now();
   bool _isRefreshing = false;
 
-  // Mock appointment data
-  final List<Map<String, dynamic>> _appointments = [
-    {
-      'id': 1,
-      'clientName': 'Sarah Johnson',
-      'clientInitials': 'SJ',
-      'serviceType': 'babysitting',
-      'date': DateTime.now().add(const Duration(days: 1)),
-      'startTime': const TimeOfDay(hour: 9, minute: 0),
-      'endTime': const TimeOfDay(hour: 14, minute: 0),
-      'status': 'confirmed',
-      'amount': 75.0,
-      'clientPhone': '+1 (555) 123-4567',
-      'address': '123 Oak Street, Springfield, IL 62701',
-      'notes': 'Two children: Emma (5) and Jake (3). Lunch at 12pm.',
-      'profileImage':
-          'https://images.unsplash.com/photo-1704541840921-106a1106cbb0',
-    },
-    {
-      'id': 2,
-      'clientName': 'Mike Chen',
-      'clientInitials': 'MC',
-      'serviceType': 'pet_sitting',
-      'date': DateTime.now(),
-      'startTime': const TimeOfDay(hour: 16, minute: 0),
-      'endTime': const TimeOfDay(hour: 18, minute: 0),
-      'status': 'pending',
-      'amount': 40.0,
-      'clientPhone': '+1 (555) 987-6543',
-      'address': '456 Pine Avenue, Springfield, IL 62702',
-      'notes': 'Golden Retriever named Max. Needs walk and feeding.',
-      'profileImage':
-          'https://images.unsplash.com/photo-1635068471990-6d294f073f96',
-    },
-    {
-      'id': 3,
-      'clientName': 'Emily Rodriguez',
-      'clientInitials': 'ER',
-      'serviceType': 'house_sitting',
-      'date': DateTime.now().add(const Duration(days: 2)),
-      'startTime': const TimeOfDay(hour: 19, minute: 0),
-      'endTime': const TimeOfDay(hour: 23, minute: 0),
-      'status': 'confirmed',
-      'amount': 80.0,
-      'clientPhone': '+1 (555) 456-7890',
-      'address': '789 Maple Drive, Springfield, IL 62703',
-      'notes': 'Water plants, collect mail, and feed cats.',
-      'profileImage':
-          'https://images.unsplash.com/photo-1639123123923-d0d8ec97e5d1',
-    },
-    {
-      'id': 4,
-      'clientName': 'David Wilson',
-      'clientInitials': 'DW',
-      'serviceType': 'babysitting',
-      'date': DateTime.now().add(const Duration(days: 3)),
-      'startTime': const TimeOfDay(hour: 18, minute: 30),
-      'endTime': const TimeOfDay(hour: 23, minute: 0),
-      'status': 'confirmed',
-      'amount': 67.5,
-      'clientPhone': '+1 (555) 234-5678',
-      'address': '321 Cedar Lane, Springfield, IL 62704',
-      'notes': 'Date night sitting. One child: Sophie (7). Bedtime at 8:30pm.',
-      'profileImage':
-          'https://images.unsplash.com/photo-1722605896508-ecae644f6345',
-    },
-    {
-      'id': 5,
-      'clientName': 'Lisa Thompson',
-      'clientInitials': 'LT',
-      'serviceType': 'pet_sitting',
-      'date': DateTime.now().subtract(const Duration(days: 1)),
-      'startTime': const TimeOfDay(hour: 8, minute: 0),
-      'endTime': const TimeOfDay(hour: 10, minute: 0),
-      'status': 'completed',
-      'amount': 30.0,
-      'clientPhone': '+1 (555) 345-6789',
-      'address': '654 Birch Street, Springfield, IL 62705',
-      'notes': 'Two cats: Whiskers and Mittens. Morning feeding.',
-      'profileImage':
-          'https://images.unsplash.com/photo-1704541840921-106a1106cbb0',
-    },
-  ];
+  // Appointment data
+  List<Map<String, dynamic>> _appointments = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _fetchBookings();
   }
 
   @override
@@ -152,30 +74,140 @@ class _CalendarViewState extends State<CalendarView>
     }).toList();
   }
 
-  Future<void> _refreshCalendar() async {
-    if (_isRefreshing) return;
-
+  Future<void> _fetchBookings() async {
     setState(() {
       _isRefreshing = true;
     });
 
-    HapticFeedback.lightImpact();
+    try {
+      final rawBookings = await SupabaseService.instance.getBookings();
+      final List<Map<String, dynamic>> loadedAppointments = [];
 
-    // Simulate data refresh
-    await Future.delayed(const Duration(seconds: 2));
+      for (var booking in rawBookings) {
+        final client = booking['clients'] ?? {};
+        final isRecurring = booking['is_recurring'] == true;
+        final startDate = DateTime.parse(booking['start_date']);
+        final startTime = _parseTime(booking['start_time']);
+        final endTime = _parseTime(booking['end_time'] ?? booking['start_time']);
 
-    if (mounted) {
-      setState(() {
-        _isRefreshing = false;
+        final baseAppointment = {
+          'id': booking['id'],
+          'clientName': client['full_name'] ?? 'Unknown Client',
+          'clientInitials': _getInitials(client['full_name'] ?? 'Client'),
+          'serviceType': booking['service_type'] ?? 'service',
+          'startTime': startTime,
+          'endTime': endTime,
+          'status': booking['status'] ?? 'pending',
+          'amount': (booking['total_amount'] as num?)?.toDouble() ?? 0.0,
+          'clientPhone': client['phone'] ?? '',
+          'address': booking['address'] ?? '',
+          'notes': booking['special_instructions'] ?? '',
+          'profileImage': client['avatar_url'] ??
+              'https://images.unsplash.com/photo-1704541840921-106a1106cbb0',
+        };
+
+        if (isRecurring) {
+          final recurrenceRule = booking['recurrence_rule'] as String?;
+          final recurrenceEndDateStr = booking['recurrence_end_date'] as String?;
+          final recurrenceEndDate = recurrenceEndDateStr != null
+              ? DateTime.parse(recurrenceEndDateStr)
+              : startDate.add(const Duration(days: 365)); // Default 1 year
+
+          loadedAppointments.addAll(_generateRecurringAppointments(
+            baseAppointment,
+            startDate,
+            recurrenceRule,
+            recurrenceEndDate,
+          ));
+        } else {
+          loadedAppointments.add({
+            ...baseAppointment,
+            'date': startDate,
+          });
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _appointments = loadedAppointments;
+          _isRefreshing = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching bookings: $e');
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load bookings: $e')),
+        );
+      }
+    }
+  }
+
+  List<Map<String, dynamic>> _generateRecurringAppointments(
+    Map<String, dynamic> baseAppointment,
+    DateTime startDate,
+    String? rule,
+    DateTime endDate,
+  ) {
+    final List<Map<String, dynamic>> appointments = [];
+    DateTime currentDate = startDate;
+
+    while (currentDate.isBefore(endDate) ||
+        currentDate.isAtSameMomentAs(endDate)) {
+      appointments.add({
+        ...baseAppointment,
+        'date': currentDate,
+        'isRecurringInstance': true,
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Calendar updated'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      switch (rule) {
+        case 'daily':
+          currentDate = currentDate.add(const Duration(days: 1));
+          break;
+        case 'weekly':
+          currentDate = currentDate.add(const Duration(days: 7));
+          break;
+        case 'monthly':
+          currentDate = DateTime(
+            currentDate.year,
+            currentDate.month + 1,
+            currentDate.day,
+          );
+          break;
+        default:
+          // If unknown rule, stop to avoid infinite loop
+          return appointments;
+      }
     }
+    return appointments;
+  }
+
+  TimeOfDay _parseTime(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      return TimeOfDay(
+        hour: int.parse(parts[0]),
+        minute: int.parse(parts[1]),
+      );
+    } catch (e) {
+      return const TimeOfDay(hour: 0, minute: 0);
+    }
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'C';
+    final parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
+  Future<void> _refreshCalendar() async {
+    await _fetchBookings();
   }
 
   void _onViewModeChanged(CalendarViewMode mode) {
@@ -332,11 +364,10 @@ class _CalendarViewState extends State<CalendarView>
   }
 
   void _onMessageClient(Map<String, dynamic> appointment) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening message to ${appointment['clientName']}'),
-        duration: const Duration(seconds: 2),
-      ),
+    Navigator.pushNamed(
+      context,
+      AppRoutes.communicationHub,
+      arguments: {'clientName': appointment['clientName']},
     );
   }
 

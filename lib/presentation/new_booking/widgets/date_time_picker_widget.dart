@@ -4,6 +4,7 @@ import 'package:sizer/sizer.dart';
 
 import '../../../core/app_export.dart';
 import '../../../widgets/custom_icon_widget.dart';
+import '../../../services/supabase_service.dart';
 
 class DateTimePickerWidget extends StatefulWidget {
   final DateTime? startDate;
@@ -32,6 +33,11 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
   TimeOfDay? _selectedEndTime;
   bool _isRecurring = false;
   String _recurringPattern = 'weekly';
+  DateTime? _recurrenceEndDate;
+  
+  List<Map<String, dynamic>> _existingBookings = [];
+  bool _isLoadingBookings = false;
+  String? _conflictMessage;
 
   @override
   void initState() {
@@ -40,10 +46,209 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
     _selectedEndDate = widget.endDate;
     _selectedStartTime = widget.startTime;
     _selectedEndTime = widget.endTime;
+    // Default recurrence end date to 1 month from now if not set
+    _recurrenceEndDate = DateTime.now().add(const Duration(days: 30));
+    _fetchBookings();
   }
 
-  void _updateDateTime() {
+  Future<void> _fetchBookings() async {
+    setState(() {
+      _isLoadingBookings = true;
+    });
+    try {
+      final user = SupabaseService.instance.currentUser;
+      if (user != null) {
+        // Fetch all bookings for this sitter to check for conflicts
+        final bookings = await SupabaseService.instance.getBookings(
+          sitterId: user.id,
+          // Fetch all bookings to ensuring recurring ones from the past are included
+        );
+        if (mounted) {
+          setState(() {
+            _existingBookings = bookings;
+            _isLoadingBookings = false;
+          });
+          // Re-validate in case we already have a selection that conflicts
+          _updateDateTime(); 
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching bookings: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingBookings = false;
+        });
+      }
+    }
+  }
+
+  bool _checkConflict() {
+    if (_selectedStartDate == null ||
+        _selectedStartTime == null ||
+        _selectedEndTime == null) return false;
+
+    // 1. Generate slots needed for the NEW booking
+    List<DateTimeRange> proposedSlots = [];
+    
+    final startDateTime = DateTime(
+      _selectedStartDate!.year,
+      _selectedStartDate!.month,
+      _selectedStartDate!.day,
+      _selectedStartTime!.hour,
+      _selectedStartTime!.minute,
+    );
+    
+    final endDateTimeBase = DateTime(
+       _selectedEndDate?.year ?? _selectedStartDate!.year,
+       _selectedEndDate?.month ?? _selectedStartDate!.month,
+       _selectedEndDate?.day ?? _selectedStartDate!.day,
+       _selectedEndTime!.hour,
+       _selectedEndTime!.minute,
+    );
+    
+    final duration = endDateTimeBase.difference(startDateTime);
+
+    // If new booking is recurring, look ahead a bit (e.g., 6 months or 50 occurrences)
+    // to warn about conflicts in the series.
+    if (_isRecurring && _recurrenceEndDate != null) {
+      DateTime current = startDateTime;
+      int limit = 50; 
+      while (current.isBefore(_recurrenceEndDate!.add(const Duration(days: 1))) && limit > 0) {
+        proposedSlots.add(DateTimeRange(start: current, end: current.add(duration)));
+        
+        if (_recurringPattern == 'daily') {
+          current = current.add(const Duration(days: 1));
+        } else if (_recurringPattern == 'weekly') {
+           current = current.add(const Duration(days: 7));
+        } else if (_recurringPattern == 'monthly') {
+           var newMonth = current.month + 1;
+           var newYear = current.year;
+           if (newMonth > 12) { newMonth = 1; newYear++; }
+           // Handle end of month edge cases simply for now
+           var daysInNewMonth = DateUtils.getDaysInMonth(newYear, newMonth);
+           var newDay = current.day > daysInNewMonth ? daysInNewMonth : current.day;
+           current = DateTime(newYear, newMonth, newDay, current.hour, current.minute);
+        }
+        limit--;
+      }
+    } else {
+       proposedSlots.add(DateTimeRange(start: startDateTime, end: endDateTimeBase));
+    }
+
+    // 2. Check against existing bookings
+    for (var booking in _existingBookings) {
+      if (booking['status'] == 'cancelled' || booking['status'] == 'declined') continue;
+
+      final isExistingRecurring = booking['is_recurring'] == true;
+      
+      try {
+        final bDateStr = booking['start_date'] as String;
+        final bDate = DateTime.parse(bDateStr);
+        final bStartTimeStr = (booking['start_time'] as String);
+        final bTimeParts = bStartTimeStr.split(':');
+        
+        // Base start time on the booking's original date
+        final bStartDateTime = DateTime(
+            bDate.year, bDate.month, bDate.day, 
+            int.parse(bTimeParts[0]), int.parse(bTimeParts[1])
+        );
+        
+        // Calculate duration of the existing booking
+        final bEndDateStr = (booking['end_date'] ?? booking['start_date']) as String;
+        final bEndDate = DateTime.parse(bEndDateStr);
+        final bEndTimeStr = (booking['end_time'] ?? booking['start_time']) as String;
+        final bEndTimeParts = bEndTimeStr.split(':');
+        final bEndDateTime = DateTime(
+            bEndDate.year, bEndDate.month, bEndDate.day, 
+            int.parse(bEndTimeParts[0]), int.parse(bEndTimeParts[1])
+        );
+        final bDuration = bEndDateTime.difference(bStartDateTime);
+        
+        final bRecurEndStr = booking['recurrence_end_date'] as String?;
+        final bRecurEnd = bRecurEndStr != null 
+            ? DateTime.parse(bRecurEndStr) 
+            : bStartDateTime.add(const Duration(days: 365)); // Fallback
+        
+        final bRule = booking['recurrence_rule'] ?? 'weekly';
+
+        for (var slot in proposedSlots) {
+           if (!isExistingRecurring) {
+              // Simple overlap check
+              if (slot.start.isBefore(bEndDateTime) && slot.end.isAfter(bStartDateTime)) {
+                 return true;
+              }
+           } else {
+              // Existing booking is recurring.
+              // We check if the 'slot' (which spans slot.start to slot.end) overlaps with ANY instance of 'booking'.
+              // We generate instances of 'booking' for the dates involved in 'slot'.
+              
+              // Days to check: slot.start date and slot.end date
+              final checkDates = {
+                DateTime(slot.start.year, slot.start.month, slot.start.day),
+                DateTime(slot.end.year, slot.end.month, slot.end.day)
+              };
+
+              for (var date in checkDates) {
+                  // 1. Is date within recurrence range?
+                  if (date.isBefore(DateTime(bDate.year, bDate.month, bDate.day))) continue;
+                  if (date.isAfter(bRecurEnd.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1)))) continue;
+                  
+                  // 2. Does date match the pattern?
+                  bool matches = false;
+                  final rule = bRule.toLowerCase();
+                  if (rule == 'daily') {
+                    matches = true;
+                  } else if (rule == 'weekly') {
+                    matches = date.weekday == bDate.weekday;
+                  } else if (rule == 'monthly') {
+                    matches = date.day == bDate.day;
+                  }
+                  
+                  if (matches) {
+                    // Reconstruct the booking instance on this specific date
+                    // Note: This logic assumes "Time of Day" applies to the recurrence date.
+                    final instanceStart = DateTime(
+                      date.year, date.month, date.day,
+                      bStartDateTime.hour, bStartDateTime.minute
+                    );
+                    final instanceEnd = instanceStart.add(bDuration);
+                    
+                    if (slot.start.isBefore(instanceEnd) && slot.end.isAfter(instanceStart)) {
+                       print('Time Conflict found! New: ${slot.start}-${slot.end} vs Recurring: $instanceStart-$instanceEnd');
+                       return true; 
+                    }
+                  }
+              }
+           }
+        }
+      } catch (e) {
+        // Skip malformed booking data
+        continue;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _selectRecurrenceEndDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _recurrenceEndDate ?? DateTime.now().add(const Duration(days: 30)),
+      firstDate: _selectedStartDate ?? DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _recurrenceEndDate = picked;
+      });
+      _updateDateTime();
+    }
+  }
+
+    void _updateDateTime() {
     int duration = 0;
+    _conflictMessage = null;
+
     if (_selectedStartDate != null &&
         _selectedStartTime != null &&
         _selectedEndTime != null) {
@@ -65,16 +270,32 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
 
       duration = endDateTime.difference(startDateTime).inHours;
       if (duration < 0) duration = 0;
+
+      // Check for conflicts
+      if (_checkConflict()) {
+        setState(() {
+          _conflictMessage = "This slot is already occupied please use set other time";
+        });
+      } else {
+        setState(() {
+          _conflictMessage = null;
+        });
+      }
     }
+
+    // If there is a conflict, we send null for startTime to prevent "Next"
+    // but we allow the UI to show the selected (conflicted) time.
+    final hasConflict = _conflictMessage != null;
 
     widget.onDateTimeSelected({
       'startDate': _selectedStartDate,
       'endDate': _selectedEndDate,
-      'startTime': _selectedStartTime,
+      'startTime': hasConflict ? null : _selectedStartTime, 
       'endTime': _selectedEndTime,
       'duration': duration,
       'isRecurring': _isRecurring,
       'recurringPattern': _recurringPattern,
+      'recurrenceEndDate': _recurrenceEndDate,
     });
   }
 
@@ -248,7 +469,7 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
           SizedBox(height: 4.h),
 
           // Duration display
-          if (_selectedStartTime != null && _selectedEndTime != null)
+            if (_selectedStartTime != null && _selectedEndTime != null)
             Container(
               padding: EdgeInsets.all(4.w),
               decoration: BoxDecoration(
@@ -273,6 +494,40 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
                 ],
               ),
             ),
+
+          if (_conflictMessage != null) ...[
+            SizedBox(height: 2.h),
+            Container(
+              padding: EdgeInsets.all(3.w),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.error.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  CustomIconWidget(
+                    iconName: 'error_outline',
+                    color: theme.colorScheme.error,
+                    size: 5.w,
+                  ),
+                  SizedBox(width: 3.w),
+                  Expanded(
+                    child: Text(
+                      _conflictMessage!,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.error,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
 
           SizedBox(height: 4.h),
 
@@ -512,6 +767,17 @@ class _DateTimePickerWidgetState extends State<DateTimePickerWidget> {
                 ),
               ],
             ),
+          ),
+          SizedBox(height: 2.h),
+          _buildDateTimeCard(
+            context,
+            'Repeat Until',
+            _recurrenceEndDate != null
+                ? _formatDate(_recurrenceEndDate!)
+                : 'Select end date',
+            'event_repeat',
+            _selectRecurrenceEndDate,
+            _recurrenceEndDate != null,
           ),
         ],
       ],

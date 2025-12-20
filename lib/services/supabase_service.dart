@@ -174,6 +174,8 @@ Future<void> signUp({
   // Booking Methods
   Future<List<Map<String, dynamic>>> getBookings({
     String? status,
+    String? clientId,
+    String? sitterId,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -182,13 +184,21 @@ Future<void> signUp({
             *,
             clients!inner (
               *,
-              user_profiles!inner (full_name, phone, avatar_url)
+              user_profiles (full_name, phone, avatar_url)
             ),
             sitter:user_profiles!bookings_sitter_id_fkey (full_name, phone, avatar_url)
           ''');
 
       if (status != null) {
         query = query.eq('status', status);
+      }
+
+      if (clientId != null) {
+        query = query.eq('client_id', clientId);
+      }
+
+      if (sitterId != null) {
+        query = query.eq('sitter_id', sitterId);
       }
 
       if (startDate != null) {
@@ -223,6 +233,9 @@ Future<void> signUp({
     required double hourlyRate,
     required String address,
     String? specialInstructions,
+    bool isRecurring = false,
+    String? recurrenceRule,
+    DateTime? recurrenceEndDate,
   }) async {
     try {
       final duration = _calculateDuration(startTime, endTime ?? startTime);
@@ -243,6 +256,9 @@ Future<void> signUp({
             'duration_hours': duration,
             'address': address,
             'special_instructions': specialInstructions,
+            'is_recurring': isRecurring,
+            'recurrence_rule': recurrenceRule,
+            'recurrence_end_date': recurrenceEndDate?.toIso8601String().split('T')[0],
             'status': 'pending',
           })
           .select()
@@ -277,6 +293,7 @@ Future<void> signUp({
   Future<List<Map<String, dynamic>>> getClients() async {
     final response = await client.from('clients').select('''
         id,
+        user_id,
         full_name,
         phone,
         email,
@@ -295,6 +312,31 @@ Future<void> signUp({
       ''').order('created_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(response);
+  }
+
+  Future<void> updateClient({
+    required String clientId,
+    required String fullName,
+    required String phone,
+    required String email,
+    required String address,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
+    String? notes,
+  }) async {
+    try {
+      await client.from('clients').update({
+        'full_name': fullName,
+        'phone': phone,
+        'email': email,
+        'address': address,
+        'emergency_contact_name': emergencyContactName,
+        'emergency_contact_phone': emergencyContactPhone,
+        'special_instructions': notes,
+      }).eq('id', clientId);
+    } catch (error) {
+      throw Exception('Update client failed: $error');
+    }
   }
 
   Future<Map<String, dynamic>> createInlineClient({
@@ -346,6 +388,63 @@ Future<void> signUp({
     return response;
   }
 
+  // Client Notes Methods
+  Future<List<Map<String, dynamic>>> getClientNotes(String clientId) async {
+    try {
+      final response = await client
+          .from('client_notes')
+          .select()
+          .eq('client_id', clientId)
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(response);
+    } catch (error) {
+      throw Exception('Get client notes failed: $error');
+    }
+  }
+
+  Future<Map<String, dynamic>> addClientNote({
+    required String clientId,
+    required String content,
+  }) async {
+    try {
+      final response = await client
+          .from('client_notes')
+          .insert({
+            'client_id': clientId,
+            'content': content,
+          })
+          .select()
+          .single();
+      return response;
+    } catch (error) {
+      throw Exception('Add client note failed: $error');
+    }
+  }
+
+  Future<void> deleteClientNote(String noteId) async {
+    try {
+      await client.from('client_notes').delete().eq('id', noteId);
+    } catch (error) {
+      throw Exception('Delete client note failed: $error');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateClientNote({
+    required String noteId,
+    required String content,
+  }) async {
+    try {
+      final response = await client
+          .from('client_notes')
+          .update({'content': content})
+          .eq('id', noteId)
+          .select()
+          .single();
+      return response;
+    } catch (error) {
+      throw Exception('Update client note failed: $error');
+    }
+  }
   Future<Map<String, dynamic>?> getClientById(String clientId) async {
     try {
       final response = await client.from('clients').select('''

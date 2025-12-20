@@ -16,6 +16,9 @@ CREATE TABLE public.bookings (
   special_instructions text,
   address text NOT NULL,
   status USER-DEFINED DEFAULT 'pending'::booking_status,
+  is_recurring boolean DEFAULT false,
+  recurrence_rule text,
+  recurrence_end_date date,
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT bookings_pkey PRIMARY KEY (id),
@@ -196,3 +199,14 @@ CREATE TABLE public.user_profiles (
   CONSTRAINT user_profiles_pkey PRIMARY KEY (id),
   CONSTRAINT user_profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
+
+CREATE TABLE public.client_notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL,
+  content text NOT NULL,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT client_notes_pkey PRIMARY KEY (id),
+  CONSTRAINT client_notes_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE CASCADE
+);
+

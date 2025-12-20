@@ -28,6 +28,7 @@ class _NotesWidgetState extends State<NotesWidget> {
   final TextEditingController _simpleController = TextEditingController();
   bool _isAddingNote = false;
   bool _useRichText = false;
+  String? _editingNoteId;
 
   @override
   void dispose() {
@@ -136,7 +137,7 @@ class _NotesWidgetState extends State<NotesWidget> {
             children: [
               Expanded(
                 child: Text(
-                  'Add New Note',
+                  _editingNoteId != null ? 'Edit Note' : 'Add New Note',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -315,7 +316,7 @@ class _NotesWidgetState extends State<NotesWidget> {
                   onSelected: (value) {
                     switch (value) {
                       case 'edit':
-                        widget.onEditNote?.call(note);
+                        _startEditing(note);
                         break;
                       case 'delete':
                         _showDeleteConfirmation(context, note);
@@ -390,15 +391,33 @@ class _NotesWidgetState extends State<NotesWidget> {
     );
   }
 
+  void _startEditing(Map<String, dynamic> note) {
+    setState(() {
+      _isAddingNote = true;
+      _editingNoteId = note['id'].toString();
+      _simpleController.text = note['content'];
+      // Handle rich text if needed later
+    });
+  }
+
   void _saveNote() {
     String content = _useRichText
         ? _quillController.document.toPlainText().trim()
         : _simpleController.text.trim();
 
     if (content.isNotEmpty) {
-      widget.onAddNote?.call(content);
+      if (_editingNoteId != null) {
+        widget.onEditNote?.call({
+          'id': _editingNoteId,
+          'content': content,
+        });
+      } else {
+        widget.onAddNote?.call(content);
+      }
+      
       setState(() {
         _isAddingNote = false;
+        _editingNoteId = null;
         _simpleController.clear();
         _quillController.clear();
         _useRichText = false;

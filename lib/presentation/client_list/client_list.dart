@@ -84,6 +84,10 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
               .map((pet) =>
                   "${pet['name'] ?? 'Pet'} (${pet['type'] ?? 'Unknown'})")
               .toList(),
+          "rawPets": pets,
+          "emergency_contact_name": client['emergency_contact_name'],
+          "emergency_contact_phone": client['emergency_contact_phone'],
+          "specialInstructions": client['special_instructions'],
         };
       }).toList();
 
