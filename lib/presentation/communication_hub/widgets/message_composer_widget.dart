@@ -8,8 +8,13 @@ import '../../../services/supabase_service.dart';
 
 class MessageComposerWidget extends StatefulWidget {
   final Function(String, Map<String, dynamic>?) onSendMessage;
+  final String? initialClientId;
 
-  const MessageComposerWidget({super.key, required this.onSendMessage});
+  const MessageComposerWidget({
+    super.key,
+    required this.onSendMessage,
+    this.initialClientId,
+  });
 
   @override
   State<MessageComposerWidget> createState() => _MessageComposerWidgetState();
@@ -51,6 +56,10 @@ class _MessageComposerWidgetState extends State<MessageComposerWidget> {
         setState(() {
           _clients = clients;
           _isLoading = false;
+          // Set initial client if provided
+          if (widget.initialClientId != null) {
+            _selectedClientId = widget.initialClientId;
+          }
         });
       }
     } catch (e) {

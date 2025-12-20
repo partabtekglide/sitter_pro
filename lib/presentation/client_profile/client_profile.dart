@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/app_export.dart';
 import './widgets/bookings_timeline_widget.dart';
@@ -615,23 +616,27 @@ class _ClientProfileState extends State<ClientProfile>
     }
   }
 
-  void _callClient() {
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Calling ${_clientData["name"]}...'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  void _callClient() async {
+    final phone = _clientData["phone"] as String?;
+    if (phone == null || phone.isEmpty) return;
+
+    final url = Uri.parse('tel:${phone.replaceAll(RegExp(r'[^\d+]'), '')}');
+    try {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch dialer: $e')),
+        );
+      }
+    }
   }
 
   void _messageClient() {
-    HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening message to ${_clientData["name"]}...'),
-        duration: const Duration(seconds: 2),
-      ),
+    Navigator.pushNamed(
+      context,
+      AppRoutes.communicationHub,
+      arguments: {'clientId': _clientData["id"]},
     );
   }
 
@@ -645,15 +650,20 @@ class _ClientProfileState extends State<ClientProfile>
     );
   }
 
-  void _callEmergencyContact(Map<String, dynamic> contact) {
-    HapticFeedback.mediumImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Calling ${contact["name"]} - ${contact["phone"]}'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ),
-    );
+  void _callEmergencyContact(Map<String, dynamic> contact) async {
+    final phone = contact["phone"] as String?;
+    if (phone == null || phone.isEmpty) return;
+
+    final url = Uri.parse('tel:${phone.replaceAll(RegExp(r'[^\d+]'), '')}');
+    try {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch dialer: $e')),
+        );
+      }
+    }
   }
 
   void _viewPetKidProfile(Map<String, dynamic> petKid) {
@@ -855,12 +865,10 @@ class _ClientProfileState extends State<ClientProfile>
   }
 
   void _createNewBooking() {
-    HapticFeedback.mediumImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Creating new booking for ${_clientData["name"]}...'),
-        duration: const Duration(seconds: 2),
-      ),
+    Navigator.pushNamed(
+      context,
+      AppRoutes.newBooking,
+      arguments: {'clientId': _clientData["id"]},
     );
   }
 }

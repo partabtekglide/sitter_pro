@@ -59,7 +59,7 @@ class ServiceSelectionWidget extends StatelessWidget {
       'hourlyRate': 22.0,
     },
     {
-      'id': 'elderly_care',
+      'id': 'elder_care',
       'name': 'Elderly Care',
       'description': 'Compassionate companionship and assistance for seniors',
       'icon': 'elderly',

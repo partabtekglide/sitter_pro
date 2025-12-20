@@ -85,6 +85,22 @@ class _NewBookingState extends State<NewBooking> {
       setState(() {
         _clients = formatted;
         _isLoadingClients = false;
+
+        // Auto-select client if ID is provided in arguments
+        final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+        if (args != null && args.containsKey('clientId')) {
+          final initialClientId = args['clientId'].toString();
+          final client = _clients.firstWhere(
+            (c) => c['id'] == initialClientId,
+            orElse: () => {},
+          );
+          
+          if (client.isNotEmpty) {
+            _bookingData['clientId'] = client['id'];
+            _bookingData['clientName'] = client['name'];
+            _bookingData['hourlyRate'] = client['preferredRate'];
+          }
+        }
       });
     } catch (e) {
       print('Error loading clients for NewBooking: $e');
@@ -399,7 +415,6 @@ class _NewBookingState extends State<NewBooking> {
                             _updateBookingData({
                               'clientId': client['id'],
                               'clientName': client['name'],
-                              'address': client['address'],
                               'hourlyRate': client['preferredRate'],
                             });
                           },

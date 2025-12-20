@@ -202,7 +202,7 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
           'Check security system regularly',
         ];
         break;
-      case 'elderly_care':
+      case 'elder_care':
         templates = [
           'Medication reminder at 10 AM and 6 PM',
           'Prefers light conversation and company',

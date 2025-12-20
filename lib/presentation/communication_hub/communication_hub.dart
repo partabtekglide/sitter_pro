@@ -42,22 +42,22 @@ class _CommunicationHubState extends State<CommunicationHub>
 
   Future<void> _loadData() async {
     try {
-      final templates = await SupabaseService.instance.getMessageTemplates();
-      final conversations = await SupabaseService.instance.getConversations();
+      // final templates = await SupabaseService.instance.getMessageTemplates();
+      // final conversations = await SupabaseService.instance.getConversations();
 
       if (mounted) {
         setState(() {
-          _templates = templates;
-          _conversations = conversations;
-          _sentHistory =
-              conversations.where((c) => c['type'] == 'message').toList();
+          // _templates = templates;
+          // _conversations = conversations;
+          // _sentHistory =
+          //     conversations.where((c) => c['type'] == 'message').toList();
           _isLoading = false;
         });
       }
     } catch (error) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar( 
           SnackBar(
             content: Text('Failed to load data: $error'),
             backgroundColor: Colors.red,
@@ -222,6 +222,7 @@ class _CommunicationHubState extends State<CommunicationHub>
             // Tab Views
             Expanded(
               child: MessageComposerWidget(
+                initialClientId: (ModalRoute.of(context)?.settings.arguments as Map?)?['clientId'],
                 onSendMessage: (message, client) {
                   // Logic handled internally in MessageComposerWidget
                 },
@@ -264,12 +265,12 @@ class _CommunicationHubState extends State<CommunicationHub>
         ),
       ),
       bottomNavigationBar: const CustomBottomBar(currentIndex: 2),
-      floatingActionButton: _tabController.index == 0
-          ? FloatingActionButton(
-              onPressed: () => _showCreateTemplateDialog(theme),
-              child: const Icon(Icons.add),
-            )
-          : null,
+      // floatingActionButton: _tabController.index == 0
+      //     ? FloatingActionButton(
+      //         onPressed: () => _showCreateTemplateDialog(theme),
+      //         child: const Icon(Icons.add),
+      //       )
+      //     : null,
     );
   }
 
