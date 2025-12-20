@@ -175,6 +175,7 @@ Future<void> signUp({
   Future<List<Map<String, dynamic>>> getBookings({
     String? status,
     String? clientId,
+    String? sitterId,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -194,6 +195,10 @@ Future<void> signUp({
 
       if (clientId != null) {
         query = query.eq('client_id', clientId);
+      }
+
+      if (sitterId != null) {
+        query = query.eq('sitter_id', sitterId);
       }
 
       if (startDate != null) {
