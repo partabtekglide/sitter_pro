@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../presentation/dashboard/dashboard.dart';
@@ -143,6 +144,21 @@ Future<void> signUp({
   Stream<AuthState> get authStateChanges => client.auth.onAuthStateChange;
 
   // User Profile Methods
+  Future<String> uploadAvatar(String userId, String filePath) async {
+    try {
+      final file = File(filePath);
+      final fileExt = filePath.split('.').last;
+      final fileName = '$userId.${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final path = 'avatar/$fileName';
+
+      await client.storage.from('avatar').upload(path, file);
+      final imageUrl = client.storage.from('avatar').getPublicUrl(path);
+      return imageUrl;
+    } catch (error) {
+      throw Exception('Upload avatar failed: $error');
+    }
+  }
+
   Future<Map<String, dynamic>?> getUserProfile(String userId) async {
     try {
       final response =

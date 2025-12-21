@@ -24,7 +24,7 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
-  String _selectedRole = 'client';
+  String _selectedRole = 'sitter';
   bool _agreeToTerms = false;
 
   String? _emailError;
@@ -295,6 +295,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     SizedBox(height: 3.h),
 
+                    /*
                     // Role Selection
                     Text(
                       'I am a:',
@@ -333,6 +334,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                       ],
                     ),
+                    */
 
                     SizedBox(height: 3.h),
 

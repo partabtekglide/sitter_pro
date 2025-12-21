@@ -9,6 +9,7 @@ import './widgets/emergency_contact_section.dart';
 import './widgets/profile_photo_section.dart';
 import './widgets/rate_settings_section.dart';
 import './widgets/service_type_selector.dart';
+import '../../services/supabase_service.dart';
 
 class SitterProfileSetup extends StatefulWidget {
   const SitterProfileSetup({super.key});
@@ -33,12 +34,48 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
   // State variables
   int _currentStep = 0;
   XFile? _selectedPhoto;
+  String? _existingAvatarUrl;
   List<ServiceType> _selectedServices = [];
   List<EmergencyContact> _emergencyContacts = [];
   bool _isLoading = false;
 
   // Progress tracking
   static const int totalSteps = 3;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfile();
+  }
+
+  Future<void> _fetchProfile() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = SupabaseService.instance.currentUser;
+      if (user != null) {
+        final profile = await SupabaseService.instance.getUserProfile(user.id);
+        if (profile != null) {
+          setState(() {
+            _nameController.text = profile['full_name'] ?? '';
+            _emailController.text = profile['email'] ?? '';
+            _phoneController.text = profile['phone'] ?? '';
+            _addressController.text = profile['address'] ?? '';
+            _bioController.text = profile['bio'] ?? '';
+            _rateController.text = (profile['hourly_rate'] ?? '').toString();
+            _existingAvatarUrl = profile['avatar_url'];
+            // Note: services and emergency contacts are not in user_profiles table
+            // so they are not populated here unless added to the schema
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching profile: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -59,8 +96,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
             _phoneController.text.trim().isNotEmpty &&
             _emailController.text.trim().isNotEmpty;
       case 1:
-        return _selectedServices.isNotEmpty &&
-            _rateController.text.trim().isNotEmpty &&
+        return _rateController.text.trim().isNotEmpty &&
             (double.tryParse(_rateController.text) ?? 0) >= 5;
       case 2:
         return true; // Bio and emergency contacts are optional
@@ -134,8 +170,27 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
     });
 
     try {
-      // Simulate API call to save profile
-      await Future.delayed(const Duration(seconds: 2));
+      final user = SupabaseService.instance.currentUser;
+      if (user == null) throw Exception('User not logged in');
+
+      String? avatarUrl = _existingAvatarUrl;
+      if (_selectedPhoto != null) {
+        avatarUrl = await SupabaseService.instance.uploadAvatar(
+          user.id,
+          _selectedPhoto!.path,
+        );
+      }
+
+      final updates = {
+        'full_name': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'address': _addressController.text.trim(),
+        'bio': _bioController.text.trim(),
+        'hourly_rate': double.tryParse(_rateController.text.trim()) ?? 0.0,
+        'avatar_url': avatarUrl,
+      };
+
+      await SupabaseService.instance.updateUserProfile(user.id, updates);
 
       if (mounted) {
         // Show success message
@@ -161,7 +216,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to save profile. Please try again.'),
+            content: Text('Failed to save profile: ${e.toString()}'),
             backgroundColor: AppTheme.lightTheme.colorScheme.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -334,6 +389,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
               });
             },
             selectedPhoto: _selectedPhoto,
+            existingAvatarUrl: _existingAvatarUrl,
           ),
           SizedBox(height: 4.h),
           TextFormField(
@@ -426,6 +482,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
             ),
           ),
           SizedBox(height: 4.h),
+          /*
           ServiceTypeSelector(
             selectedServices: _selectedServices,
             onServicesChanged: (services) {
@@ -435,6 +492,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
             },
           ),
           SizedBox(height: 4.h),
+          */
           RateSettingsSection(
             rateController: _rateController,
             onRateChanged: (rate) {
@@ -473,6 +531,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
             },
           ),
           SizedBox(height: 4.h),
+          /*
           EmergencyContactSection(
             contacts: _emergencyContacts,
             onContactsChanged: (contacts) {
@@ -481,6 +540,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
               });
             },
           ),
+          */
           SizedBox(height: 6.h),
         ],
       ),

@@ -10,11 +10,13 @@ import '../../../core/app_export.dart';
 class ProfilePhotoSection extends StatefulWidget {
   final Function(XFile?) onPhotoSelected;
   final XFile? selectedPhoto;
+  final String? existingAvatarUrl;
 
   const ProfilePhotoSection({
     super.key,
     required this.onPhotoSelected,
     this.selectedPhoto,
+    this.existingAvatarUrl,
   });
 
   @override
@@ -334,25 +336,35 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
                             semanticLabel: "Selected profile photo preview",
                           ),
                   )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CustomIconWidget(
-                        iconName: 'add_a_photo',
-                        color: AppTheme.lightTheme.colorScheme.primary,
-                        size: 32,
-                      ),
-                      SizedBox(height: 1.h),
-                      Text(
-                        'Add Photo',
-                        style:
-                            AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                          color: AppTheme.lightTheme.colorScheme.primary,
-                          fontWeight: FontWeight.w500,
+                : widget.existingAvatarUrl != null
+                    ? ClipOval(
+                        child: CustomImageWidget(
+                          imageUrl: widget.existingAvatarUrl!,
+                          width: 30.w,
+                          height: 30.w,
+                          fit: BoxFit.cover,
+                          semanticLabel: "Existing profile photo",
                         ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CustomIconWidget(
+                            iconName: 'add_a_photo',
+                            color: AppTheme.lightTheme.colorScheme.primary,
+                            size: 32,
+                          ),
+                          SizedBox(height: 1.h),
+                          Text(
+                            'Add Photo',
+                            style: AppTheme.lightTheme.textTheme.bodySmall
+                                ?.copyWith(
+                              color: AppTheme.lightTheme.colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
           ),
         ),
         SizedBox(height: 2.h),
