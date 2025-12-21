@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'dart:async';
 
 import '../../core/app_export.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -30,12 +31,27 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
   List<String> _recentSearches = ['Sarah Johnson', 'Pet Care', 'Downtown'];
   bool _isLoading = false;
   bool _isSearching = false;
+  StreamSubscription? _clientSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadClients();
     _searchController.addListener(_onSearchChanged);
+    _setupClientListener();
+  }
+
+  void _setupClientListener() {
+    final userId = SupabaseService.instance.currentUser?.id;
+    if (userId == null) return;
+
+    _clientSubscription = SupabaseService.instance.client
+        .from('clients')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .listen((_) {
+      _loadClients();
+    });
   }
 
   @override
@@ -43,6 +59,7 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     _scrollController.dispose();
+    _clientSubscription?.cancel();
     super.dispose();
   }
 

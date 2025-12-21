@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:async';
 
 import '../presentation/dashboard/dashboard.dart';
 
@@ -20,6 +22,26 @@ class SupabaseService {
 
   // Supabase client getter
   SupabaseClient get client => Supabase.instance.client;
+
+  // Central Notification State
+  final ValueNotifier<List<Map<String, dynamic>>> notificationsNotifier = ValueNotifier([]);
+  StreamSubscription? _notifSubscription;
+
+  void startNotificationListener() {
+    final userId = currentUser?.id;
+    if (userId == null) return;
+
+    _notifSubscription?.cancel();
+    _notifSubscription = client
+        .from('notifications')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .order('created_at', ascending: false)
+        .listen((data) {
+      print('Supabase Stream: Received ${data.length} notifications');
+      notificationsNotifier.value = data;
+    });
+  }
 
   // Add SignUp method
   // Future<void> signUp({
@@ -637,7 +659,7 @@ Future<void> signUp({
           .from('notifications')
           .update({'is_read': true})
           .eq('user_id', userId)
-          .eq('is_read', false);
+          .or('is_read.eq.false,is_read.is.null'); // Update both false and null unread ones
     } catch (error) {
       throw Exception('Mark all notifications as read failed: $error');
     }

@@ -9,6 +9,8 @@ import 'core/app_export.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 void main() async {
   await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +42,7 @@ class SitterProManagerApp extends StatelessWidget {
           themeMode: ThemeMode.system,
           initialRoute: AppRoutes.initial,
           routes: AppRoutes.routes,
+          navigatorObservers: [routeObserver],
           builder: (context, child) {
             return MediaQuery(
               data: MediaQuery.of(

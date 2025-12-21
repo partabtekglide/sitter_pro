@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
+import 'dart:async';
 
 import '../../core/app_export.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -29,6 +30,7 @@ class _CalendarViewState extends State<CalendarView>
   DateTime _selectedDate = DateTime.now();
   DateTime _focusedDate = DateTime.now();
   bool _isRefreshing = false;
+  StreamSubscription? _bookingSubscription;
 
   // Appointment data
   List<Map<String, dynamic>> _appointments = [];
@@ -38,11 +40,26 @@ class _CalendarViewState extends State<CalendarView>
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _fetchBookings();
+    _setupBookingListener();
+  }
+
+  void _setupBookingListener() {
+    final userId = SupabaseService.instance.currentUser?.id;
+    if (userId == null) return;
+
+    _bookingSubscription = SupabaseService.instance.client
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('sitter_id', userId)
+        .listen((_) {
+      _fetchBookings();
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _bookingSubscription?.cancel();
     super.dispose();
   }
 

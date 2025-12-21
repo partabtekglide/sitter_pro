@@ -1,30 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/supabase_service.dart';
 
 class NotificationIcon extends StatelessWidget {
   const NotificationIcon({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-
-    if (userId == null) return const Icon(Icons.notifications_none);
-
-    return StreamBuilder<List<Map<String, dynamic>>>(
-      // Sirf UNREAD notifications suno
-      stream: Supabase.instance.client
-          .from('notifications')
-          .stream(primaryKey: ['id'])
-          .eq('user_id', userId) 
-          .order('created_at', ascending: false),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Icon(Icons.notifications_none);
-        }
-
-        final notifications = snapshot.data!;
-        // Count unread
-        final unreadCount = notifications.where((n) => n['is_read'] == false).length;
+    return ValueListenableBuilder<List<Map<String, dynamic>>>(
+      valueListenable: SupabaseService.instance.notificationsNotifier,
+      builder: (context, notifications, child) {
+        // Count unread: anything that is not true is unread (including null)
+        final unreadCount = notifications.where((n) => n['is_read'] != true).length;
 
         return Stack(
           alignment: Alignment.center,
@@ -33,7 +19,7 @@ class NotificationIcon extends StatelessWidget {
             if (unreadCount > 0)
               Positioned(
                 right: 0,
-                top: 8, // Adjust to fit the icon
+                top: 8,
                 child: Container(
                   padding: const EdgeInsets.all(2),
                   decoration: BoxDecoration(

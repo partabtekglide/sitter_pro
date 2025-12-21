@@ -47,24 +47,11 @@ class NotificationsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: SupabaseService.instance.client
-            .from('notifications')
-            .stream(primaryKey: ['id'])
-            .eq('user_id', userId)
-            .order('created_at', ascending: false),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-
-          final allNotifications = snapshot.data ?? [];
+      body: ValueListenableBuilder<List<Map<String, dynamic>>>(
+        valueListenable: SupabaseService.instance.notificationsNotifier,
+        builder: (context, allNotifications, child) {
           // Filter to only show unread notifications in the UI
-          final notifications = allNotifications.where((n) => n['is_read'] == false).toList();
+          final notifications = allNotifications.where((n) => n['is_read'] != true).toList();
 
           if (notifications.isEmpty) {
             return Center(
@@ -97,12 +84,7 @@ class NotificationsScreen extends StatelessWidget {
               final bool isRead = notification['is_read'] ?? false;
 
               return InkWell(
-                onTap: () async {
-                  if (!isRead) {
-                    await SupabaseService.instance.markNotificationAsRead(notification['id']);
-                  }
-                  // Handle navigation based on type or booking_id here if needed
-                },
+                onTap: () => _showNotificationDialog(context, notification, theme),
                 child: Container(
                   padding: EdgeInsets.all(4.w),
                   decoration: BoxDecoration(
@@ -173,6 +155,89 @@ class NotificationsScreen extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+
+  void _showNotificationDialog(BuildContext context, Map<String, dynamic> notification, ThemeData theme) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: EdgeInsets.all(6.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(2.w),
+                    decoration: BoxDecoration(
+                      color: _getIconColor(notification['type']).withAlpha(30),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getIcon(notification['type']),
+                      color: _getIconColor(notification['type']),
+                      size: 24,
+                    ),
+                  ),
+                  SizedBox(width: 3.w),
+                  Expanded(
+                    child: Text(
+                      notification['title'] ?? 'Notification',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 3.h),
+              Text(
+                notification['message'] ?? '',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withAlpha(200),
+                ),
+              ),
+              SizedBox(height: 4.h),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Close'),
+                  ),
+                  SizedBox(width: 2.w),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () async {
+                      try {
+                        await SupabaseService.instance.markNotificationAsRead(notification['id']);
+                        if (context.mounted) Navigator.pop(context);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: $e')),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('Mark as Read'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

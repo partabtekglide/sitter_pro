@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
+import 'dart:async';
+import '../../main.dart';
 
 import '../../core/app_export.dart';
 import '../../services/supabase_service.dart';
@@ -19,7 +21,7 @@ class Dashboard extends StatefulWidget {
   State<Dashboard> createState() => _DashboardState();
 }
 
-class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
+class _DashboardState extends State<Dashboard> with TickerProviderStateMixin, RouteAware {
   bool _isRefreshing = false;
   bool _isLocationEnabled = false;
   Map<String, dynamic>? _weatherData;
@@ -41,16 +43,72 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
     _tabController = TabController(length: 4, vsync: this);
     _loadDashboardData();
     _loadWeatherData();
+    _setupNotificationListener();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Register this screen with the route observer
+    routeObserver.subscribe(this, ModalRoute.of(context) as PageRoute);
+  }
+
+  @override
+  void didPopNext() {
+    // This runs when the top route is popped and this route becomes visible again
+    print('Dashboard: Navigated back to dashboard, refreshing data...');
+    _loadDashboardData();
+  }
+
+  void _setupNotificationListener() {
+    SupabaseService.instance.startNotificationListener();
+    
+    // Listen to notification changes to update recent activities locally
+    SupabaseService.instance.notificationsNotifier.addListener(_onNotificationsChanged);
+    
+    // Trigger once manually to load any data already present
+    _onNotificationsChanged();
+  }
+
+  void _onNotificationsChanged() {
+    if (!mounted) return;
+    
+    final notifications = SupabaseService.instance.notificationsNotifier.value;
+    print('Dashboard: Syncing ${notifications.length} notifications to activities');
+    
+    if (notifications.isEmpty) return;
+
+    setState(() {
+      _recentActivities = notifications
+          .take(5)
+          .map((notification) => {
+                'id': notification['id'],
+                'type': _getActivityType(notification['type'] ?? ''),
+                'title': notification['title'] ?? 'New Notification',
+                'description': notification['message'] ?? '',
+                'timestamp': notification['created_at'] != null 
+                    ? DateTime.parse(notification['created_at']) 
+                    : DateTime.now(),
+                'hasAction': notification['actionable'] ?? false,
+                'isRead': notification['is_read'] ?? false,
+              })
+          .toList();
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    routeObserver.unsubscribe(this);
+    SupabaseService.instance.notificationsNotifier.removeListener(_onNotificationsChanged);
     super.dispose();
   }
 
   Future<void> _loadDashboardData() async {
     try {
+      // 1. Restart notification stream to ensure real-time sync is active
+      SupabaseService.instance.startNotificationListener();
+
       // Load dashboard statistics
       final stats = await SupabaseService.instance.getDashboardStats();
       print(  'Loaded dashboard stats: $stats');
@@ -101,22 +159,23 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
                     },
                   )
                   .toList();
-
-          _recentActivities =
-              notifications
-                  .take(5)
-                  .map(
-                    (notification) => {
-                      'id': notification['id'],
-                      'type': _getActivityType(notification['type']),
-                      'title': notification['title'],
-                      'description': notification['message'],
-                      'timestamp': DateTime.parse(notification['created_at']),
-                      'hasAction': notification['actionable'] ?? false,
-                      'isRead': notification['is_read'] ?? true,
-                    },
-                  )
-                  .toList();
+          
+          // Note: _recentActivities is now handled mainly by the notificationsNotifier listener
+          // but we populate it here too as a fallback for the first load
+          if (_recentActivities.isEmpty && notifications.isNotEmpty) {
+            _recentActivities = notifications
+                .take(5)
+                .map((n) => {
+                  'id': n['id'],
+                  'type': _getActivityType(n['type'] ?? ''),
+                  'title': n['title'] ?? 'New Notification',
+                  'description': n['message'] ?? '',
+                  'timestamp': DateTime.parse(n['created_at']),
+                  'hasAction': n['actionable'] ?? false,
+                  'isRead': n['is_read'] ?? false,
+                })
+                .toList();
+          }
         });
       }
     } catch (error) {
