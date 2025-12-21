@@ -12,6 +12,7 @@ import '../presentation/financial_dashboard/financial_dashboard.dart';
 import '../presentation/job_check_in/job_check_in.dart';
 import '../presentation/settings/settings.dart';
 import '../presentation/signup_screen/signup_screen.dart';
+import '../presentation/notifications/notifications_screen.dart';
 
 class AppRoutes {
   // TODO: Add your routes here
@@ -29,6 +30,7 @@ class AppRoutes {
   static const String jobCheckIn = '/job-check-in';
   static const String settings = '/settings';
   static const String signupScreen = '/signup-screen';
+  static const String notifications = '/notifications';
 
   static Map<String, WidgetBuilder> get routes => {
     initial: (context) => const SplashScreen(),
@@ -45,6 +47,7 @@ class AppRoutes {
     jobCheckIn: (context) => const JobCheckIn(),
     settings: (context) => const Settings(),
     signupScreen: (context) => const SignupScreen(),
+    notifications: (context) => const NotificationsScreen(),
     // TODO: Add your other routes here
   };
 }

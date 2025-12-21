@@ -113,6 +113,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin {
                       'description': notification['message'],
                       'timestamp': DateTime.parse(notification['created_at']),
                       'hasAction': notification['actionable'] ?? false,
+                      'isRead': notification['is_read'] ?? true,
                     },
                   )
                   .toList();

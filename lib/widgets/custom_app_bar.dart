@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'notification_icon.dart';
+import '../routes/app_routes.dart';
 
 enum CustomAppBarVariant {
   standard,
@@ -229,28 +231,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     // Add notification action for dashboard and client list
     if (_shouldShowNotifications(context)) {
       defaultActions.add(
-        Stack(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications_outlined),
-              onPressed:
-                  onNotificationTap ?? () => _navigateToNotifications(context),
-              tooltip: 'Notifications',
-            ),
-            if (showNotificationBadge)
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.error,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-          ],
+        InkWell(
+          onTap: onNotificationTap ?? () => _navigateToNotifications(context),
+          borderRadius: BorderRadius.circular(20),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+            child: NotificationIcon(),
+          ),
         ),
       );
     }
@@ -285,13 +272,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   void _navigateToNotifications(BuildContext context) {
-    // For now, show a snackbar. In a real app, navigate to notifications screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Notifications feature coming soon'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    Navigator.pushNamed(context, AppRoutes.notifications);
   }
 
   void _navigateToProfile(BuildContext context) {

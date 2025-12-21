@@ -141,14 +141,32 @@ class RecentActivityWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    activity['title'] as String,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          activity['title'] as String,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: activity['isRead'] == false
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (activity['isRead'] == false)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          margin: EdgeInsets.only(left: 2.w),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
                   ),
                   SizedBox(height: 0.5.h),
                   Text(

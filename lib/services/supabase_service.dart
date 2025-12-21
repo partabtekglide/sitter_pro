@@ -631,6 +631,18 @@ Future<void> signUp({
     }
   }
 
+  Future<void> markAllNotificationsAsRead(String userId) async {
+    try {
+      await client
+          .from('notifications')
+          .update({'is_read': true})
+          .eq('user_id', userId)
+          .eq('is_read', false);
+    } catch (error) {
+      throw Exception('Mark all notifications as read failed: $error');
+    }
+  }
+
   Future<Map<String, dynamic>> createNotification({
     required String userId,
     required String type,
