@@ -220,15 +220,12 @@ class _FinancialDashboardState extends State<FinancialDashboard>
           ),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                onRefresh: _loadFinancialData,
-                child: Column(
-                  children: [
-                    // Period Selector
-                    Container(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                // Period Selector
+                Container(
                       margin: EdgeInsets.all(4.w),
                       padding: EdgeInsets.symmetric(
                         horizontal: 4.w,
@@ -297,94 +294,92 @@ class _FinancialDashboardState extends State<FinancialDashboard>
                         controller: _tabController,
                         children: [
                           // Overview Tab
-                          SingleChildScrollView(
-                            padding: EdgeInsets.all(4.w),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Financial Stats Cards
-                                FinancialStatsWidget(
-                                  totalEarnings:
-                                      _financialData['totalEarnings'] ?? 0,
-                                  pendingPayments:
-                                      _financialData['pendingPayments'] ?? 0,
-                                  weeklyEarnings:
-                                      _financialData['weeklyEarnings'] ?? 0,
-                                  monthlyEarnings:
-                                      _financialData['monthlyEarnings'] ?? 0,
-                                  averageRate:
-                                      _financialData['averageHourlyRate'] ?? 0,
-                                ),
+                          RefreshIndicator(
+                            onRefresh: _loadFinancialData,
+                            child: SingleChildScrollView(
+                              padding: EdgeInsets.all(4.w),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Financial Stats Cards
+                                  FinancialStatsWidget(
+                                    totalEarnings:
+                                        _financialData['totalEarnings'] ?? 0,
+                                    pendingPayments:
+                                        _financialData['pendingPayments'] ?? 0,
+                                    weeklyEarnings:
+                                        _financialData['weeklyEarnings'] ?? 0,
+                                    monthlyEarnings:
+                                        _financialData['monthlyEarnings'] ?? 0,
+                                    averageRate:
+                                        _financialData['averageHourlyRate'] ?? 0,
+                                  ),
 
-                                SizedBox(height: 4.h),
+                                  SizedBox(height: 4.h),
 
-                                // Earnings Chart
-                                EarningsChartWidget(earnings: _earnings),
-
-                                SizedBox(height: 4.h),
-
-                                // Quick Actions
-                                Card(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(4.w),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Quick Actions',
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                        ),
-                                        SizedBox(height: 2.h),
-                                        Row(
-                                          children: [
-                                            Expanded(
-                                              child: ElevatedButton.icon(
-                                                onPressed:
-                                                    () => _exportData('CSV'),
-                                                icon: const Icon(
-                                                  Icons.file_download,
+                                  // Quick Actions
+                                  Card(
+                                    child: Padding(
+                                      padding: EdgeInsets.all(4.w),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Quick Actions',
+                                            style: theme.textTheme.titleMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w600,
                                                 ),
-                                                label: const Text('Export CSV'),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      theme.colorScheme.primary,
-                                                  foregroundColor:
-                                                      theme
-                                                          .colorScheme
-                                                          .onPrimary,
-                                                  padding: EdgeInsets.symmetric(
-                                                    vertical: 2.h,
+                                          ),
+                                          SizedBox(height: 2.h),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: ElevatedButton.icon(
+                                                  onPressed:
+                                                      () => _exportData('CSV'),
+                                                  icon: const Icon(
+                                                    Icons.file_download,
+                                                  ),
+                                                  label: const Text('Export CSV'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        theme.colorScheme.primary,
+                                                    foregroundColor:
+                                                        theme
+                                                            .colorScheme
+                                                            .onPrimary,
+                                                    padding: EdgeInsets.symmetric(
+                                                      vertical: 2.h,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                            SizedBox(width: 3.w),
-                                            Expanded(
-                                              child: OutlinedButton.icon(
-                                                onPressed:
-                                                    () => _exportData('PDF'),
-                                                icon: const Icon(
-                                                  Icons.picture_as_pdf,
-                                                ),
-                                                label: const Text('Export PDF'),
-                                                style: OutlinedButton.styleFrom(
-                                                  padding: EdgeInsets.symmetric(
-                                                    vertical: 2.h,
+                                              SizedBox(width: 3.w),
+                                              Expanded(
+                                                child: OutlinedButton.icon(
+                                                  onPressed:
+                                                      () => _exportData('PDF'),
+                                                  icon: const Icon(
+                                                    Icons.picture_as_pdf,
+                                                  ),
+                                                  label: const Text('Export PDF'),
+                                                  style: OutlinedButton.styleFrom(
+                                                    padding: EdgeInsets.symmetric(
+                                                      vertical: 2.h,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
 
@@ -395,19 +390,22 @@ class _FinancialDashboardState extends State<FinancialDashboard>
                           ),
 
                           // Analytics Tab
-                          SingleChildScrollView(
-                            padding: EdgeInsets.all(4.w),
-                            child: Column(
-                              children: [
-                                EarningsChartWidget(earnings: _earnings),
-                                SizedBox(height: 4.h),
-                                ExportControlsWidget(
-                                  invoices: _invoices,
-                                  onDateRangeChanged: (start, end) {
-                                    // Handle date range change if needed
-                                  },
-                                ),
-                              ],
+                          RefreshIndicator(
+                            onRefresh: _loadFinancialData,
+                            child: SingleChildScrollView(
+                              padding: EdgeInsets.all(4.w),
+                              child: Column(
+                                children: [
+                                  EarningsChartWidget(earnings: _earnings),
+                                  SizedBox(height: 4.h),
+                                  ExportControlsWidget(
+                                    invoices: _invoices,
+                                    onDateRangeChanged: (start, end) {
+                                      // Handle date range change if needed
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -415,7 +413,6 @@ class _FinancialDashboardState extends State<FinancialDashboard>
                     ),
                   ],
                 ),
-              ),
       bottomNavigationBar: const CustomBottomBar(currentIndex: 3),
     );
   }

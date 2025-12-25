@@ -714,7 +714,7 @@ Future<void> signUp({
           .from('bookings')
           .select('total_amount')
           .eq('sitter_id', userId)
-          .eq('status', 'completed')
+          // .eq('status', 'completed')
           .gte('start_date', weekStart.toIso8601String().split('T')[0])
           .lte('start_date', weekEnd.toIso8601String().split('T')[0]);
 

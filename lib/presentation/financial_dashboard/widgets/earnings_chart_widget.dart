@@ -22,7 +22,7 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
-        padding: EdgeInsets.all(16.w),
+        padding: EdgeInsets.all(4.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -30,18 +30,21 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Earnings Trend',
-                  style: GoogleFonts.inter(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
+                Expanded(
+                  child: Text(
+                    'Earnings Trend',
+                    style: GoogleFonts.inter(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[800],
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 4.h,
+                    horizontal: 4.w,
+                    vertical: 1.h,
                   ),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[300]!),
@@ -75,7 +78,7 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
 
             // Chart
             SizedBox(
-              height: 200.h,
+              height: 30.h,
               child:
                   _chartType == 'Line' ? _buildLineChart() : _buildBarChart(),
             ),
@@ -116,7 +119,7 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 40.w,
+              reservedSize: 12.w,
               getTitlesWidget: (value, meta) {
                 return Text(
                   '\$${value.toInt()}',
@@ -131,7 +134,7 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 30.h,
+              reservedSize: 4.h,
               getTitlesWidget: (value, meta) {
                 if (value.toInt() < chartData.length) {
                   return Text(
@@ -219,7 +222,7 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 40.w,
+              reservedSize: 12.w,
               getTitlesWidget: (value, meta) {
                 return Text(
                   '\$${value.toInt()}',
@@ -234,7 +237,7 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 30.h,
+              reservedSize: 4.h,
               getTitlesWidget: (value, meta) {
                 if (value.toInt() < chartData.length) {
                   return Text(
@@ -272,7 +275,7 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                     ),
-                    width: 20.w,
+                    width: 6.w,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ],
@@ -283,13 +286,13 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
   }
 
   Widget _buildLegend() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 4.w,
+      runSpacing: 2.h,
       children: [
         _buildLegendItem('Babysitting', const Color(0xFF1976D2)),
-        SizedBox(width: 20.w),
         _buildLegendItem('Pet Sitting', const Color(0xFF4CAF50)),
-        SizedBox(width: 20.w),
         _buildLegendItem('House Sitting', const Color(0xFFFF9800)),
       ],
     );
@@ -299,17 +302,17 @@ class _EarningsChartWidgetState extends State<EarningsChartWidget> {
     return Row(
       children: [
         Container(
-          width: 12.w,
-          height: 12.h,
+          width: 3.w,
+          height: 3.w,
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        SizedBox(width: 6.w),
+        SizedBox(width: 2.w),
         Text(
           label,
-          style: GoogleFonts.inter(fontSize: 11.sp, color: Colors.grey[600]),
+          style: GoogleFonts.inter(fontSize: 10.sp, color: Colors.grey[600]),
         ),
       ],
     );

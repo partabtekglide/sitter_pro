@@ -20,7 +20,7 @@ class InvoiceListWidget extends StatelessWidget {
         children: [
           // Header with filters
           Container(
-            padding: EdgeInsets.all(16.w),
+            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 2.h),
             color: Colors.white,
             child: Row(
               children: [
@@ -53,7 +53,7 @@ class InvoiceListWidget extends StatelessWidget {
                 invoices.isEmpty
                     ? _buildEmptyState()
                     : ListView.builder(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
+                      padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
                       itemCount: invoices.length,
                       itemBuilder: (context, index) {
                         final invoice = invoices[index];
@@ -67,43 +67,58 @@ class InvoiceListWidget extends StatelessWidget {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 64.sp,
-            color: Colors.grey[400],
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'No invoices yet',
-            style: GoogleFonts.inter(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 40.sp,
+                    color: Colors.grey[400],
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    'No invoices yet',
+                    style: GoogleFonts.inter(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 1.h),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w),
+                    child: Text(
+                      'Create your first invoice to track payments',
+                      style: GoogleFonts.inter(fontSize: 12.sp, color: Colors.grey[500]),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  SizedBox(height: 3.h),
+                  ElevatedButton.icon(
+                    onPressed: () => _createNewInvoice(null),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Create Invoice'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1976D2),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 1.5.h),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          SizedBox(height: 8.h),
-          Text(
-            'Create your first invoice to track payments',
-            style: GoogleFonts.inter(fontSize: 14.sp, color: Colors.grey[500]),
-            textAlign: TextAlign.center,
-          ),
-          SizedBox(height: 24.h),
-          ElevatedButton.icon(
-            onPressed: () => _createNewInvoice(null),
-            icon: const Icon(Icons.add),
-            label: const Text('Create Invoice'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1976D2),
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -118,7 +133,7 @@ class InvoiceListWidget extends StatelessWidget {
     final isOverdue = _isOverdue(dueDate, status);
 
     return Card(
-      margin: EdgeInsets.only(bottom: 12.h),
+      margin: EdgeInsets.only(bottom: 1.5.h),
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -131,7 +146,7 @@ class InvoiceListWidget extends StatelessWidget {
         onTap: () => _showInvoiceDetails(context, invoice),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.all(16.w),
+          padding: EdgeInsets.all(4.w),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -196,7 +211,7 @@ class InvoiceListWidget extends StatelessWidget {
                 ],
               ),
 
-              SizedBox(height: 12.h),
+              SizedBox(height: 2.h),
 
               // Details Row
               Row(
@@ -253,7 +268,7 @@ class InvoiceListWidget extends StatelessWidget {
                 ],
               ),
 
-              SizedBox(height: 12.h),
+              SizedBox(height: 2.h),
 
               // Action Buttons
               Row(
@@ -407,7 +422,7 @@ class InvoiceListWidget extends StatelessWidget {
             minChildSize: 0.5,
             builder:
                 (context, scrollController) => Container(
-                  padding: EdgeInsets.all(20.w),
+                  padding: EdgeInsets.all(6.w),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -483,7 +498,7 @@ class InvoiceListWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100.w,
+            width: 30.w,
             child: Text(
               '$label:',
               style: GoogleFonts.inter(
