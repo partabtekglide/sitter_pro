@@ -71,10 +71,25 @@ class _FinancialDashboardState extends State<FinancialDashboard>
           .eq('status', 'completed')
           .order('start_date', ascending: false);
 
+      // Load financial stats from API
+      final stats = await SupabaseService.instance.getFinancialStats();
+
       setState(() {
         _invoices = List<Map<String, dynamic>>.from(invoicesResponse);
         _earnings = List<Map<String, dynamic>>.from(earningsResponse);
-        _calculateFinancialStats();
+        _financialData = stats;
+
+        // Calculate Average Hourly Rate from bookings (heuristic)
+        double totalBookingEarnings = 0;
+        for (final earning in _earnings) {
+          totalBookingEarnings +=
+              (earning['total_amount'] as num?)?.toDouble() ?? 0;
+        }
+        _financialData['averageHourlyRate'] =
+            totalBookingEarnings > 0
+                ? (totalBookingEarnings / _earnings.length * 0.8)
+                : 25.0;
+
         _isLoading = false;
       });
     } catch (e) {
@@ -140,6 +155,7 @@ class _FinancialDashboardState extends State<FinancialDashboard>
         },
       ];
 
+      // Use calculated stats for mock data
       _calculateFinancialStats();
       _isLoading = false;
     });

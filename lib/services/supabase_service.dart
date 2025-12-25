@@ -850,21 +850,28 @@ Future<void> signUp({
       final monthStart = DateTime(now.year, now.month, 1);
       final yearStart = DateTime(now.year, 1, 1);
 
-      // Weekly pending
+      // Total Pending (All time)
+      final allPendingInvoices = await client
+          .from('invoices')
+          .select('total_amount')
+          .eq('sitter_id', userId)
+          .neq('status', 'paid');
+
+      // Weekly Invoices (Issued this week)
       final weeklyInvoices = await client
           .from('invoices')
-          .select('total_amount, status')
+          .select('total_amount, status, paid_date')
           .eq('sitter_id', userId)
           .gte('issued_date', weekStart.toIso8601String().split('T')[0]);
 
-      // Monthly pending
+      // Monthly Invoices (Issued this month)
       final monthlyInvoices = await client
           .from('invoices')
-          .select('total_amount, status')
+          .select('total_amount, status, paid_date')
           .eq('sitter_id', userId)
           .gte('issued_date', monthStart.toIso8601String().split('T')[0]);
 
-      // YTD earnings
+      // YTD Earnings (Paid this year)
       final ytdInvoices = await client
           .from('invoices')
           .select('total_amount')
@@ -872,30 +879,41 @@ Future<void> signUp({
           .eq('status', 'paid')
           .gte('paid_date', yearStart.toIso8601String().split('T')[0]);
 
-      double weeklyPending = 0;
-      double monthlyPending = 0;
-      double ytdEarnings = 0;
+      double pendingPayments = 0;
+      double weeklyEarnings = 0;
+      double monthlyEarnings = 0;
+      double totalEarnings = 0; // Usage as YTD or total based on preference
 
+      // Calculate Total Pending
+      for (var invoice in allPendingInvoices) {
+        pendingPayments += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
+      }
+
+      // Calculate Weekly Stats
       for (var invoice in weeklyInvoices) {
-        if (invoice['status'] != 'paid') {
-          weeklyPending += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
+        if (invoice['status'] == 'paid') {
+           weeklyEarnings += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
         }
       }
 
+      // Calculate Monthly Stats
       for (var invoice in monthlyInvoices) {
-        if (invoice['status'] != 'paid') {
-          monthlyPending += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
+        if (invoice['status'] == 'paid') {
+           monthlyEarnings += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
         }
       }
 
+      // Calculate YTD
       for (var invoice in ytdInvoices) {
-        ytdEarnings += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
+        totalEarnings += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
       }
 
       return {
-        'weeklyPending': weeklyPending,
-        'monthlyPending': monthlyPending,
-        'ytdEarnings': ytdEarnings,
+        'totalEarnings': totalEarnings,
+        'pendingPayments': pendingPayments,
+        'weeklyEarnings': weeklyEarnings,
+        'monthlyEarnings': monthlyEarnings,
+        'averageHourlyRate': 0.0, // Placeholder or calculate if possible
       };
     } catch (error) {
       throw Exception('Get financial stats failed: $error');
