@@ -5,11 +5,19 @@ import 'package:google_fonts/google_fonts.dart';
 class InvoiceListWidget extends StatelessWidget {
   final List<Map<String, dynamic>> invoices;
   final VoidCallback onRefresh;
+  final bool showPaid;
+  final bool showPending;
+  final bool showOverdue;
+  final Function(bool, bool, bool) onFilterChanged;
 
   const InvoiceListWidget({
     super.key,
     required this.invoices,
     required this.onRefresh,
+    required this.showPaid,
+    required this.showPending,
+    required this.showOverdue,
+    required this.onFilterChanged,
   });
 
   @override
@@ -35,14 +43,15 @@ class InvoiceListWidget extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: () => _showFilterDialog(context),
-                  icon: const Icon(Icons.filter_list),
+                  icon: Icon(
+                    Icons.filter_list,
+                    color: (showPaid && showPending && showOverdue) 
+                        ? Colors.black 
+                        : const Color(0xFF1976D2), // Highlight if filtered
+                  ),
                   tooltip: 'Filter invoices',
                 ),
-                IconButton(
-                  onPressed: () => _createNewInvoice(context),
-                  icon: const Icon(Icons.add),
-                  tooltip: 'Create invoice',
-                ),
+
               ],
             ),
           ),
@@ -63,6 +72,61 @@ class InvoiceListWidget extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // ... (Keep _buildEmptyState and _buildInvoiceCard as is)
+
+  void _showFilterDialog(BuildContext context) {
+    bool localPaid = showPaid;
+    bool localPending = showPending;
+    bool localOverdue = showOverdue;
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('Filter Invoices'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Status filter
+                    CheckboxListTile(
+                      title: const Text('Show Paid'),
+                      value: localPaid,
+                      onChanged: (value) => setState(() => localPaid = value!),
+                    ),
+                    CheckboxListTile(
+                      title: const Text('Show Pending'),
+                      subtitle: const Text('(Draft, Sent)'),
+                      value: localPending,
+                      onChanged: (value) => setState(() => localPending = value!),
+                    ),
+                    CheckboxListTile(
+                      title: const Text('Show Overdue'),
+                      value: localOverdue,
+                      onChanged: (value) => setState(() => localOverdue = value!),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      onFilterChanged(localPaid, localPending, localOverdue);
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Apply'),
+                  ),
+                ],
+              );
+            },
+          ),
     );
   }
 
@@ -355,46 +419,7 @@ class InvoiceListWidget extends StatelessWidget {
         .join(' ');
   }
 
-  void _showFilterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Filter Invoices'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Status filter
-                CheckboxListTile(
-                  title: const Text('Show Paid'),
-                  value: true,
-                  onChanged: (value) {},
-                ),
-                CheckboxListTile(
-                  title: const Text('Show Pending'),
-                  value: true,
-                  onChanged: (value) {},
-                ),
-                CheckboxListTile(
-                  title: const Text('Show Overdue'),
-                  value: true,
-                  onChanged: (value) {},
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Apply'),
-              ),
-            ],
-          ),
-    );
-  }
+
 
   void _createNewInvoice(BuildContext? context) {
     // Mock create invoice functionality

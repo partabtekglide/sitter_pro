@@ -35,6 +35,10 @@ class _FinancialDashboardState extends State<FinancialDashboard>
     'This Year',
   ];
 
+  bool _showPaid = true;
+  bool _showPending = true;
+  bool _showOverdue = true;
+
   @override
   void initState() {
     super.initState();
@@ -50,32 +54,88 @@ class _FinancialDashboardState extends State<FinancialDashboard>
       final userId = supabase.auth.currentUser?.id;
 
       if (userId == null) {
-        _showMockData();
+        setState(() => _isLoading = false);
         return;
       }
 
-      // Load invoices
+      // Calculate start and end dates based on selected period
+      DateTime now = DateTime.now();
+      DateTime startDate;
+      DateTime endDate;
+      
+      switch (_selectedPeriod) {
+        case 'This Week':
+          // Assuming Monday is the start of the week
+          startDate = now.subtract(Duration(days: now.weekday - 1));
+          endDate = startDate.add(const Duration(days: 6));
+          break;
+        case 'This Month':
+          startDate = DateTime(now.year, now.month, 1);
+          endDate = DateTime(now.year, now.month + 1, 0);
+          break;
+        case 'This Quarter':
+          int quarter = (now.month - 1) ~/ 3 + 1;
+          startDate = DateTime(now.year, (quarter - 1) * 3 + 1, 1);
+          endDate = DateTime(now.year, quarter * 3 + 1, 0);
+          break;
+        case 'This Year':
+          startDate = DateTime(now.year, 1, 1);
+          endDate = DateTime(now.year, 12, 31);
+          break;
+        default:
+          startDate = DateTime(now.year, now.month, 1);
+          endDate = DateTime(now.year, now.month + 1, 0);
+      }
+      
+      String startDateStr = startDate.toIso8601String().split('T')[0];
+      String endDateStr = endDate.toIso8601String().split('T')[0];
+
+      // Load invoices (Filter by booking start_date)
       final invoicesResponse = await supabase
           .from('invoices')
           .select(
             '*, bookings!inner(service_type, start_date, clients!inner(user_profiles!inner(full_name)))',
           )
           .eq('sitter_id', userId)
-          .order('created_at', ascending: false);
+          .gte('bookings.start_date', startDateStr)
+          .lte('bookings.start_date', endDateStr)
+          .order('issued_date', ascending: false);
 
-      // Load earnings from completed bookings
+      // Load earnings from completed bookings (Filter by start_date)
       final earningsResponse = await supabase
           .from('bookings')
           .select('total_amount, start_date, service_type, status')
           .eq('sitter_id', userId)
           .eq('status', 'completed')
+          .gte('start_date', startDateStr)
+          .lte('start_date', endDateStr)
           .order('start_date', ascending: false);
 
       // Load financial stats from API
       final stats = await SupabaseService.instance.getFinancialStats();
 
       setState(() {
-        _invoices = List<Map<String, dynamic>>.from(invoicesResponse);
+        // Filter invoices based on status checkboxes
+        final allInvoices = List<Map<String, dynamic>>.from(invoicesResponse);
+        _invoices = allInvoices.where((inv) {
+          final status = (inv['status'] as String? ?? 'draft').toLowerCase();
+          
+          // Check for overdue logic if needed, or rely on status field
+          // Assuming 'overdue' is a status, or we check due_date
+          bool isOverdue = status == 'overdue';
+          if (!isOverdue && status != 'paid' && inv['due_date'] != null) {
+             final dueDate = DateTime.tryParse(inv['due_date']);
+             if (dueDate != null && DateTime.now().isAfter(dueDate)) {
+               isOverdue = true;
+             }
+          }
+
+          if (status == 'paid') return _showPaid;
+          if (isOverdue) return _showOverdue;
+          // Pending includes 'sent', 'draft', 'pending' that are not overdue
+          return _showPending;
+        }).toList();
+
         _earnings = List<Map<String, dynamic>>.from(earningsResponse);
         _financialData = stats;
 
@@ -89,76 +149,21 @@ class _FinancialDashboardState extends State<FinancialDashboard>
             totalBookingEarnings > 0
                 ? (totalBookingEarnings / _earnings.length * 0.8)
                 : 25.0;
+        
+        // Update total earnings in stats to reflect the filtered period
+        _financialData['totalEarnings'] = totalBookingEarnings;
 
         _isLoading = false;
       });
     } catch (e) {
       print('Error loading financial data: $e');
-      _showMockData();
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load financial data: $e')),
+        );
+      }
     }
-  }
-
-  void _showMockData() {
-    setState(() {
-      _invoices = [
-        {
-          'id': '1',
-          'invoice_number': 'INV-2024-0001',
-          'amount': 125.00,
-          'total_amount': 137.50,
-          'status': 'paid',
-          'issued_date': '2024-11-10',
-          'due_date': '2024-12-10',
-          'description': 'Babysitting services - 5 hours',
-          'bookings': {
-            'service_type': 'babysitting',
-            'start_date': '2024-11-10',
-            'clients': {
-              'user_profiles': {'full_name': 'Sarah Johnson'},
-            },
-          },
-        },
-        {
-          'id': '2',
-          'invoice_number': 'INV-2024-0002',
-          'amount': 80.00,
-          'total_amount': 88.00,
-          'status': 'sent',
-          'issued_date': '2024-11-12',
-          'due_date': '2024-12-12',
-          'description': 'Pet sitting services - 4 hours',
-          'bookings': {
-            'service_type': 'pet_sitting',
-            'start_date': '2024-11-12',
-            'clients': {
-              'user_profiles': {'full_name': 'Mike Chen'},
-            },
-          },
-        },
-      ];
-
-      _earnings = [
-        {
-          'total_amount': 125.00,
-          'start_date': '2024-11-10',
-          'service_type': 'babysitting',
-        },
-        {
-          'total_amount': 80.00,
-          'start_date': '2024-11-11',
-          'service_type': 'pet_sitting',
-        },
-        {
-          'total_amount': 200.00,
-          'start_date': '2024-11-08',
-          'service_type': 'house_sitting',
-        },
-      ];
-
-      // Use calculated stats for mock data
-      _calculateFinancialStats();
-      _isLoading = false;
-    });
   }
 
   void _calculateFinancialStats() {
@@ -240,54 +245,7 @@ class _FinancialDashboardState extends State<FinancialDashboard>
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                // Period Selector
-                Container(
-                      margin: EdgeInsets.all(4.w),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 4.w,
-                        vertical: 2.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.outline.withValues(
-                            alpha: 0.2,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Period: ',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Expanded(
-                            child: DropdownButton<String>(
-                              value: _selectedPeriod,
-                              isExpanded: true,
-                              underline: Container(),
-                              items:
-                                  _periods.map((period) {
-                                    return DropdownMenuItem(
-                                      value: period,
-                                      child: Text(period),
-                                    );
-                                  }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedPeriod = value!;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Tab Bar
+                // Tab Bar
                     Container(
                       color: theme.colorScheme.surface,
                       child: TabBar(
@@ -340,57 +298,57 @@ class _FinancialDashboardState extends State<FinancialDashboard>
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Quick Actions',
-                                            style: theme.textTheme.titleMedium
-                                                ?.copyWith(
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                          ),
-                                          SizedBox(height: 2.h),
-                                          Row(
-                                            children: [
-                                              Expanded(
-                                                child: ElevatedButton.icon(
-                                                  onPressed:
-                                                      () => _exportData('CSV'),
-                                                  icon: const Icon(
-                                                    Icons.file_download,
-                                                  ),
-                                                  label: const Text('Export CSV'),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        theme.colorScheme.primary,
-                                                    foregroundColor:
-                                                        theme
-                                                            .colorScheme
-                                                            .onPrimary,
-                                                    padding: EdgeInsets.symmetric(
-                                                      vertical: 2.h,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(width: 3.w),
-                                              Expanded(
-                                                child: OutlinedButton.icon(
-                                                  onPressed:
-                                                      () => _exportData('PDF'),
-                                                  icon: const Icon(
-                                                    Icons.picture_as_pdf,
-                                                  ),
-                                                  label: const Text('Export PDF'),
-                                                  style: OutlinedButton.styleFrom(
-                                                    padding: EdgeInsets.symmetric(
-                                                      vertical: 2.h,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                        // children: [
+                                        //   Text(
+                                        //     'Quick Actions',
+                                        //     style: theme.textTheme.titleMedium
+                                        //         ?.copyWith(
+                                        //           fontWeight: FontWeight.w600,
+                                        //         ),
+                                        //   ),
+                                        //   SizedBox(height: 2.h),
+                                        //   Row(
+                                        //     children: [
+                                        //       Expanded(
+                                        //         child: ElevatedButton.icon(
+                                        //           onPressed:
+                                        //               () => _exportData('CSV'),
+                                        //           icon: const Icon(
+                                        //             Icons.file_download,
+                                        //           ),
+                                        //           label: const Text('Export CSV'),
+                                        //           style: ElevatedButton.styleFrom(
+                                        //             backgroundColor:
+                                        //                 theme.colorScheme.primary,
+                                        //             foregroundColor:
+                                        //                 theme
+                                        //                     .colorScheme
+                                        //                     .onPrimary,
+                                        //             padding: EdgeInsets.symmetric(
+                                        //               vertical: 2.h,
+                                        //             ),
+                                        //           ),
+                                        //         ),
+                                        //       ),
+                                        //       SizedBox(width: 3.w),
+                                        //       Expanded(
+                                        //         child: OutlinedButton.icon(
+                                        //           onPressed:
+                                        //               () => _exportData('PDF'),
+                                        //           icon: const Icon(
+                                        //             Icons.picture_as_pdf,
+                                        //           ),
+                                        //           label: const Text('Export PDF'),
+                                        //           style: OutlinedButton.styleFrom(
+                                        //             padding: EdgeInsets.symmetric(
+                                        //               vertical: 2.h,
+                                        //             ),
+                                        //           ),
+                                        //         ),
+                                        //       ),
+                                        //     ],
+                                        //   ),
+                                        // ],
                                       ),
                                     ),
                                   ),
@@ -400,9 +358,30 @@ class _FinancialDashboardState extends State<FinancialDashboard>
                           ),
 
                           // Invoices Tab
-                          InvoiceListWidget(
-                            invoices: _invoices,
-                            onRefresh: _loadFinancialData,
+                          Column(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.all(4.w),
+                                child: _buildPeriodSelector(theme),
+                              ),
+                              Expanded(
+                                child: InvoiceListWidget(
+                                  invoices: _invoices,
+                                  onRefresh: _loadFinancialData,
+                                  showPaid: _showPaid,
+                                  showPending: _showPending,
+                                  showOverdue: _showOverdue,
+                                  onFilterChanged: (paid, pending, overdue) {
+                                    setState(() {
+                                      _showPaid = paid;
+                                      _showPending = pending;
+                                      _showOverdue = overdue;
+                                    });
+                                    _loadFinancialData();
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
 
                           // Analytics Tab
@@ -412,6 +391,8 @@ class _FinancialDashboardState extends State<FinancialDashboard>
                               padding: EdgeInsets.all(4.w),
                               child: Column(
                                 children: [
+                                  _buildPeriodSelector(theme),
+                                  SizedBox(height: 2.h),
                                   EarningsChartWidget(earnings: _earnings),
                                   SizedBox(height: 4.h),
                                   ExportControlsWidget(
@@ -430,6 +411,54 @@ class _FinancialDashboardState extends State<FinancialDashboard>
                   ],
                 ),
       bottomNavigationBar: const CustomBottomBar(currentIndex: 3),
+    );
+  }
+
+  Widget _buildPeriodSelector(ThemeData theme) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 4.w,
+        vertical: 2.h,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(
+            alpha: 0.2,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Period: ',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Expanded(
+            child: DropdownButton<String>(
+              value: _selectedPeriod,
+              isExpanded: true,
+              underline: Container(),
+              items:
+                  _periods.map((period) {
+                    return DropdownMenuItem(
+                      value: period,
+                      child: Text(period),
+                    );
+                  }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedPeriod = value!;
+                });
+                _loadFinancialData();
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
