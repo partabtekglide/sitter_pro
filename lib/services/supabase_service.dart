@@ -727,40 +727,40 @@ Future<void> signUp({
       final weekStart = today.subtract(Duration(days: today.weekday - 1));
       final weekEnd = weekStart.add(const Duration(days: 6));
 
-      // Get today's appointments
+      // 1. Today's Appointments
       final todayBookings = await client
           .from('bookings')
           .select('*')
           .eq('sitter_id', userId)
           .eq('start_date', today.toIso8601String().split('T')[0]);
 
-      // Get weekly earnings
-      final weeklyBookings = await client
-          .from('bookings')
+      // 2. Weekly Earnings (From Invoices: Paid this week)
+      final weeklyPaidInvoices = await client
+          .from('invoices')
           .select('total_amount')
           .eq('sitter_id', userId)
-          // .eq('status', 'completed')
-          .gte('start_date', weekStart.toIso8601String().split('T')[0])
-          .lte('start_date', weekEnd.toIso8601String().split('T')[0]);
+          .eq('status', 'paid')
+          .gte('paid_date', weekStart.toIso8601String().split('T')[0])
+          .lte('paid_date', weekEnd.toIso8601String().split('T')[0]);
 
       double weeklyEarnings = 0;
-      for (var booking in weeklyBookings) {
-        weeklyEarnings += (booking['total_amount'] as num?)?.toDouble() ?? 0;
+      for (var invoice in weeklyPaidInvoices) {
+        weeklyEarnings += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
       }
 
-      // Get pending payments
-      final pendingBookings = await client
-          .from('bookings')
+      // 3. Pending Payments (From Invoices: All unpaid)
+      final pendingInvoices = await client
+          .from('invoices')
           .select('total_amount')
           .eq('sitter_id', userId)
-          .eq('status', 'completed'); // Assuming completed but not paid
+          .neq('status', 'paid');
 
       double pendingPayments = 0;
-      for (var booking in pendingBookings) {
-        pendingPayments += (booking['total_amount'] as num?)?.toDouble() ?? 0;
+      for (var invoice in pendingInvoices) {
+        pendingPayments += (invoice['total_amount'] as num?)?.toDouble() ?? 0;
       }
 
-      // Get active clients count
+      // 4. Active Clients (From Bookings)
       final clientsData = await client
           .from('bookings')
           .select('client_id')
