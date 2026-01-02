@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 class InvoiceListWidget extends StatelessWidget {
   final List<Map<String, dynamic>> invoices;
@@ -19,7 +20,6 @@ class InvoiceListWidget extends StatelessWidget {
     required this.showOverdue,
     required this.onFilterChanged,
   });
-
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
@@ -191,7 +191,7 @@ class InvoiceListWidget extends StatelessWidget {
     final statusColor = _getStatusColor(status);
     final amount = (invoice['total_amount'] as num?)?.toDouble() ?? 0;
     final clientName =
-        invoice['user_profiles']?['full_name'] ?? 'Unknown Client';
+        invoice['clients']?['full_name'] ?? 'Unknown Client';
     final invoiceNumber = invoice['invoice_number'] ?? '';
     final dueDate = invoice['due_date'] ?? '';
     final isOverdue = _isOverdue(dueDate, status);
@@ -486,7 +486,7 @@ class InvoiceListWidget extends StatelessWidget {
                             ),
                             _buildDetailRow(
                               'Client',
-                              invoice['user_profiles']?['full_name'],
+                              invoice['clients']?['full_name'],
                             ),
                             _buildDetailRow(
                               'Amount',
@@ -568,11 +568,23 @@ class InvoiceListWidget extends StatelessWidget {
   }
 
   void _shareInvoice(BuildContext context, Map<String, dynamic> invoice) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Invoice shared successfully!'),
-        backgroundColor: Color(0xFF2196F3),
-      ),
-    );
+    final invoiceNumber = invoice['invoice_number'] ?? 'N/A';
+    final clientName = invoice['clients']?['full_name'] ?? 'Client';
+    final amount = (invoice['total_amount'] as num?)?.toDouble() ?? 0.0;
+    final dueDate = _formatDate(invoice['due_date']);
+    final status = (invoice['status'] as String? ?? 'draft').toUpperCase();
+    
+    final String shareText = '''
+INVOICE: $invoiceNumber
+To: $clientName
+Amount: \$${amount.toStringAsFixed(2)}
+Due Date: $dueDate
+Status: $status
+
+Please find your invoice details above.
+''';
+
+    Share.share(shareText, subject: 'Invoice $invoiceNumber from Sitter Pro');
   }
 }
+

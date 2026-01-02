@@ -94,7 +94,7 @@ class _FinancialDashboardState extends State<FinancialDashboard>
       final invoicesResponse = await supabase
           .from('invoices')
           .select(
-            '*, bookings!inner(service_type, start_date, clients!inner(user_profiles!inner(full_name)))',
+            '*, clients!inner(full_name), bookings!inner(service_type, start_date)',
           )
           .eq('sitter_id', userId)
           .gte('bookings.start_date', startDateStr)
