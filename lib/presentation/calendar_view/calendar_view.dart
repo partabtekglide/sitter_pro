@@ -302,6 +302,9 @@ class _CalendarViewState extends State<CalendarView>
       case 'check_in':
         _onCheckIn(appointment);
         break;
+      case 'check_out':
+        _onCheckOut(appointment);
+        break;
       case 'reschedule':
         _onReschedule(appointment);
         break;
@@ -323,15 +326,66 @@ class _CalendarViewState extends State<CalendarView>
     }
   }
 
-  void _onCheckIn(Map<String, dynamic> appointment) {
+  Future<void> _onCheckOut(Map<String, dynamic> appointment) async {
     HapticFeedback.mediumImpact();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Checked in for ${appointment['clientName']}'),
-        backgroundColor: AppTheme.successLight,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    
+    try {
+      await SupabaseService.instance.checkOutBooking(appointment['id']);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Checked out for ${appointment['clientName']}'),
+            backgroundColor: AppTheme.successLight,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Navigator.pop(context); // Close the bottom sheet
+        _refreshCalendar();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Check-out failed: $e'),
+            backgroundColor: AppTheme.errorLight,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _onCheckIn(Map<String, dynamic> appointment) async {
+    HapticFeedback.mediumImpact();
+    
+    try {
+      await SupabaseService.instance.createJobCheckIn(
+        bookingId: appointment['id'],
+        lat: null, // TODO: Get actual location
+        lng: null,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Checked in for ${appointment['clientName']}'),
+            backgroundColor: AppTheme.successLight,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        Navigator.pop(context); // Close the bottom sheet
+        _refreshCalendar(); // Refresh to show new status
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Check-in failed: $e'),
+            backgroundColor: AppTheme.errorLight,
+          ),
+        );
+      }
+    }
   }
 
   void _onReschedule(Map<String, dynamic> appointment) {

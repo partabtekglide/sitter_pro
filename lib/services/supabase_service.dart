@@ -261,6 +261,7 @@ Future<void> signUp({
   }
 
   Future<Map<String, dynamic>> createBooking({
+    // Note: Invoice is automatically created via SQL trigger 'on_booking_change_invoice'
     required String clientId,
     required String sitterId,
     required String serviceType,
@@ -277,13 +278,35 @@ Future<void> signUp({
     DateTime? recurrenceEndDate,
   }) async {
     try {
+      // Resolve clientId: Check if it's a valid client_id, otherwise try to find it as a user_id
+      String finalClientId = clientId;
+      
+      final clientCheck = await client
+          .from('clients')
+          .select('id')
+          .eq('id', clientId)
+          .maybeSingle();
+
+      if (clientCheck == null) {
+        // Not found as client_id, try as user_id
+        final clientByUser = await client
+            .from('clients')
+            .select('id')
+            .eq('user_id', clientId)
+            .maybeSingle();
+            
+        if (clientByUser != null) {
+          finalClientId = clientByUser['id'];
+        }
+      }
+
       final duration = _calculateDuration(startTime, endTime ?? startTime);
       final calculatedTotal = totalAmount ?? (hourlyRate * duration);
 
       final response = await client
           .from('bookings')
           .insert({
-            'client_id': clientId,
+            'client_id': finalClientId,
             'sitter_id': sitterId,
             'service_type': serviceType,
             'start_date': startDate.toIso8601String().split('T')[0],
@@ -309,6 +332,7 @@ Future<void> signUp({
   }
 
   Future<void> updateBooking({
+    // Note: Invoice is automatically updated via SQL trigger 'on_booking_change_invoice'
     required String bookingId,
     required String serviceType,
     required DateTime startDate,
@@ -349,6 +373,7 @@ Future<void> signUp({
   }
 
   Future<void> deleteBooking(String bookingId) async {
+    // Note: Invoice is automatically deleted via SQL trigger 'on_booking_delete_invoice'
     try {
       await client.from('bookings').delete().eq('id', bookingId);
     } catch (error) {
@@ -810,7 +835,7 @@ Future<void> signUp({
 
       var query = client.from('invoices').select('''
             *,
-            client:user_profiles!invoices_client_id_fkey (full_name, email),
+            client:clients!invoices_client_id_fkey (full_name, email),
             sitter:user_profiles!invoices_sitter_id_fkey (full_name, email),
             booking:bookings!invoices_booking_id_fkey (service_type, start_date)
           ''').eq('sitter_id', userId);
@@ -1004,6 +1029,34 @@ Future<void> signUp({
       return response;
     } catch (error) {
       throw Exception('Update checkout failed: $error');
+    }
+  }
+
+  Future<void> checkOutBooking(String bookingId) async {
+    try {
+      // Find the active check-in for this booking
+      var activeCheckIn = await client
+          .from('job_checkins')
+          .select('id')
+          .eq('booking_id', bookingId)
+          .filter('checkout_time', 'is', null)
+          .maybeSingle();
+
+      if (activeCheckIn == null) {
+        // Fallback: If no active check-in exists (e.g. data inconsistency),
+        // create a new one so we can close it and complete the booking.
+        print('No active check-in found. Creating a new one to facilitate checkout.');
+        activeCheckIn = await createJobCheckIn(
+          bookingId: bookingId,
+          lat: null,
+          lng: null,
+        );
+      }
+
+      await updateJobCheckOut(activeCheckIn!['id']);
+    } catch (error) {
+      print(error);
+      throw Exception('Check-out failed: $error');
     }
   }
 

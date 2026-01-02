@@ -16,11 +16,12 @@ CREATE TABLE public.bookings (
   special_instructions text,
   address text NOT NULL,
   status USER-DEFINED DEFAULT 'pending'::booking_status,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   is_recurring boolean DEFAULT false,
   recurrence_rule text,
   recurrence_end_date date,
-  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  reminder_sent boolean DEFAULT false,
   CONSTRAINT bookings_pkey PRIMARY KEY (id),
   CONSTRAINT bookings_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id),
   CONSTRAINT bookings_sitter_id_fkey FOREIGN KEY (sitter_id) REFERENCES public.user_profiles(id)
@@ -39,6 +40,15 @@ CREATE TABLE public.checkin_tasks (
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT checkin_tasks_pkey PRIMARY KEY (id),
   CONSTRAINT checkin_tasks_checkin_id_fkey FOREIGN KEY (checkin_id) REFERENCES public.job_checkins(id)
+);
+CREATE TABLE public.client_notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  client_id uuid NOT NULL,
+  content text NOT NULL,
+  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT client_notes_pkey PRIMARY KEY (id),
+  CONSTRAINT client_notes_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id)
 );
 CREATE TABLE public.clients (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -69,8 +79,8 @@ CREATE TABLE public.communications (
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT communications_pkey PRIMARY KEY (id),
   CONSTRAINT communications_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.user_profiles(id),
-  CONSTRAINT communications_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.user_profiles(id),
-  CONSTRAINT communications_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
+  CONSTRAINT communications_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id),
+  CONSTRAINT communications_receiver_id_fkey FOREIGN KEY (receiver_id) REFERENCES public.clients(id)
 );
 CREATE TABLE public.invoices (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -91,7 +101,7 @@ CREATE TABLE public.invoices (
   updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT invoices_pkey PRIMARY KEY (id),
   CONSTRAINT invoices_sitter_id_fkey FOREIGN KEY (sitter_id) REFERENCES public.user_profiles(id),
-  CONSTRAINT invoices_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.user_profiles(id),
+  CONSTRAINT invoices_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id),
   CONSTRAINT invoices_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
 );
 CREATE TABLE public.job_checkins (
@@ -125,6 +135,7 @@ CREATE TABLE public.notifications (
   is_read boolean DEFAULT false,
   actionable boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  data jsonb DEFAULT '{}'::jsonb,
   CONSTRAINT notifications_pkey PRIMARY KEY (id),
   CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id),
   CONSTRAINT notifications_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id)
@@ -200,13 +211,122 @@ CREATE TABLE public.user_profiles (
   CONSTRAINT user_profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
 
-CREATE TABLE public.client_notes (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  client_id uuid NOT NULL,
-  content text NOT NULL,
-  created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT client_notes_pkey PRIMARY KEY (id),
-  CONSTRAINT client_notes_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE CASCADE
-);
+--
+-- AUTOMATION: Sync Invoices with Bookings
+--
+CREATE OR REPLACE FUNCTION public.sync_invoices_with_bookings()
+RETURNS TRIGGER 
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- INSERT: Create a new invoice
+  IF (TG_OP = 'INSERT') THEN
+    INSERT INTO public.invoices (
+      sitter_id,
+      client_id,
+      booking_id,
+      invoice_number,
+      amount,
+      total_amount,
+      status,
+      issued_date,
+      due_date,
+      description,
+      created_at,
+      updated_at
+    ) VALUES (
+      NEW.sitter_id,
+      NEW.client_id,
+      NEW.id,
+      -- Generate a unique invoice number: INV-YYYYMMDD-ShortUUID
+      'INV-' || to_char(CURRENT_DATE, 'YYYYMMDD') || '-' || substring(NEW.id::text, 1, 8),
+      COALESCE(NEW.total_amount, 0),
+      COALESCE(NEW.total_amount, 0),
+      'draft'::invoice_status,
+      CURRENT_DATE,
+      NEW.end_date,
+      'Invoice for ' || NEW.service_type::text,
+      CURRENT_TIMESTAMP,
+      CURRENT_TIMESTAMP
+    );
+    RETURN NEW;
 
+  -- UPDATE: Update existing invoice
+  ELSIF (TG_OP = 'UPDATE') THEN
+    UPDATE public.invoices
+    SET
+      amount = COALESCE(NEW.total_amount, 0),
+      total_amount = COALESCE(NEW.total_amount, 0),
+      due_date = NEW.end_date,
+      description = 'Invoice for ' || NEW.service_type::text,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE booking_id = NEW.id;
+    RETURN NEW;
+
+  -- DELETE: Remove related invoice
+  ELSIF (TG_OP = 'DELETE') THEN
+    DELETE FROM public.invoices
+    WHERE booking_id = OLD.id;
+    RETURN OLD;
+  END IF;
+  
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for INSERT and UPDATE (AFTER)
+DROP TRIGGER IF EXISTS on_booking_change_invoice ON public.bookings;
+CREATE TRIGGER on_booking_change_invoice
+  AFTER INSERT OR UPDATE ON public.bookings
+  FOR EACH ROW EXECUTE FUNCTION public.sync_invoices_with_bookings();
+
+-- Trigger for DELETE (BEFORE) - to avoid Foreign Key constraint violation
+DROP TRIGGER IF EXISTS on_booking_delete_invoice ON public.bookings;
+CREATE TRIGGER on_booking_delete_invoice
+  BEFORE DELETE ON public.bookings
+  FOR EACH ROW EXECUTE FUNCTION public.sync_invoices_with_bookings();
+
+--
+-- AUTOMATION: Handle Job Check-in Side Effects
+--
+CREATE OR REPLACE FUNCTION public.handle_job_checkin()
+RETURNS TRIGGER 
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- CHECK IN (Start): INSERT
+  IF (TG_OP = 'INSERT') THEN
+    -- Set Booking status to In Progress
+    UPDATE public.bookings
+    SET status = 'in_progress'::booking_status,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.booking_id;
+  
+  -- CHECK OUT (End): UPDATE
+  ELSIF (TG_OP = 'UPDATE') THEN
+    -- Only if checkout_time is being set (was null, now not null)
+    IF (OLD.checkout_time IS NULL AND NEW.checkout_time IS NOT NULL) THEN
+        -- 1. Mark Booking as Completed
+        UPDATE public.bookings
+        SET status = 'completed'::booking_status,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = NEW.booking_id;
+
+        -- 2. Mark Invoice as Paid
+        UPDATE public.invoices
+        SET status = 'paid'::invoice_status,
+            paid_date = CURRENT_DATE,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE booking_id = NEW.booking_id;
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for Job Check-in (INSERT and UPDATE)
+DROP TRIGGER IF EXISTS on_job_checkin_automation ON public.job_checkins;
+CREATE TRIGGER on_job_checkin_automation
+  AFTER INSERT OR UPDATE ON public.job_checkins
+  FOR EACH ROW EXECUTE FUNCTION public.handle_job_checkin();

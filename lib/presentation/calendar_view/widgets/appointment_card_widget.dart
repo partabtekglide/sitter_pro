@@ -298,14 +298,24 @@ class AppointmentCardWidget extends StatelessWidget {
                   crossAxisSpacing: 2.w,
                   mainAxisSpacing: 2.w,
                   children: [
-                    _buildQuickActionButton(
-                      context,
-                      'Check In',
-                      'login',
-                      AppTheme.successLight,
-                      () => onAction(appointment, 'check_in'),
-                      theme,
-                    ),
+                    if (appointment['status'] == 'in_progress')
+                      _buildQuickActionButton(
+                        context,
+                        'Check Out',
+                        'logout',
+                        AppTheme.warningLight,
+                        () => onAction(appointment, 'check_out'),
+                        theme,
+                      )
+                    else
+                      _buildQuickActionButton(
+                        context,
+                        'Check In',
+                        'login',
+                        AppTheme.successLight,
+                        () => onAction(appointment, 'check_in'),
+                        theme,
+                      ),
                     // _buildQuickActionButton(
                     //   context,
                     //   'Reschedule',
@@ -373,18 +383,32 @@ class AppointmentCardWidget extends StatelessWidget {
               ),
               SizedBox(width: 3.w),
               Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => onAction(appointment, 'check_in'),
-                  icon: CustomIconWidget(
-                    iconName: 'login',
-                    color: theme.colorScheme.onPrimary,
-                    size: 4.w,
-                  ),
-                  label: const Text('Check In'),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 3.h),
-                  ),
-                ),
+                child: appointment['status'] == 'in_progress'
+                    ? ElevatedButton.icon(
+                        onPressed: () => onAction(appointment, 'check_out'),
+                        icon: CustomIconWidget(
+                          iconName: 'logout',
+                          color: theme.colorScheme.onPrimary,
+                          size: 4.w,
+                        ),
+                        label: const Text('Check Out'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.warningLight,
+                          padding: EdgeInsets.symmetric(vertical: 3.h),
+                        ),
+                      )
+                    : ElevatedButton.icon(
+                        onPressed: () => onAction(appointment, 'check_in'),
+                        icon: CustomIconWidget(
+                          iconName: 'login',
+                          color: theme.colorScheme.onPrimary,
+                          size: 4.w,
+                        ),
+                        label: const Text('Check In'),
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: 3.h),
+                        ),
+                      ),
               ),
             ],
           ),
