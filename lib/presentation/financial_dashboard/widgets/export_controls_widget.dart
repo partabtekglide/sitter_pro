@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 import 'package:universal_html/html.dart' as html;
 import 'dart:convert';
-
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../core/app_export.dart';
 import '../../../services/supabase_service.dart';
 import '../../../widgets/custom_icon_widget.dart';
@@ -74,9 +78,62 @@ class _ExportControlsWidgetState extends State<ExportControlsWidget> {
 
         html.Url.revokeObjectUrl(url);
       } else {
-        // Mobile export - would need path_provider for actual implementation
-        // For now, show success message
-        throw UnimplementedError('Mobile CSV export not implemented yet');
+        // Mobile export - Direct Download
+        String filePath;
+        
+        if (Platform.isAndroid) {
+          // Request storage permissions
+          var status = await Permission.storage.status;
+          if (!status.isGranted) {
+            status = await Permission.storage.request();
+          }
+          
+          // For Android 11+ (Manage External Storage might be needed for public dirs if not using MediaStore)
+          // But often /storage/emulated/0/Download is accessible.
+          if (await Permission.manageExternalStorage.status.isDenied) {
+             // Try to request if strictly needed, but proceed to try writing first
+          }
+
+          // Use the public Download directory
+          final downloadDir = Directory('/storage/emulated/0/Download');
+          if (await downloadDir.exists()) {
+            filePath = '${downloadDir.path}/invoices_${DateTime.now().millisecondsSinceEpoch}.csv';
+          } else {
+            // Fallback to app-specific external storage
+            final dir = await getExternalStorageDirectory();
+            filePath = '${dir?.path ?? ''}/invoices_${DateTime.now().millisecondsSinceEpoch}.csv';
+          }
+        } else {
+          // iOS - Save to Documents
+          final dir = await getApplicationDocumentsDirectory();
+          filePath = '${dir.path}/invoices_${DateTime.now().millisecondsSinceEpoch}.csv';
+        }
+
+        final file = File(filePath);
+        await file.writeAsString(csvContent);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 2.w),
+                  Expanded(
+                    child: Text(
+                      Platform.isAndroid 
+                          ? 'Saved to Downloads: ${file.uri.pathSegments.last}' 
+                          : 'Saved to Documents',
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        return; // Exit function, success handled
       }
 
       if (mounted) {
@@ -86,7 +143,7 @@ class _ExportControlsWidgetState extends State<ExportControlsWidget> {
               children: [
                 const Icon(Icons.download_done, color: Colors.white),
                 SizedBox(width: 2.w),
-                const Text('CSV file downloaded successfully'),
+                const Text('CSV exported successfully'),
               ],
             ),
             backgroundColor: Colors.green,
@@ -101,7 +158,7 @@ class _ExportControlsWidgetState extends State<ExportControlsWidget> {
               children: [
                 const Icon(Icons.error, color: Colors.white),
                 SizedBox(width: 2.w),
-                Text('Export failed: ${error.toString()}'),
+                Expanded(child: Text('Export failed: ${error.toString()}')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -142,7 +199,7 @@ class _ExportControlsWidgetState extends State<ExportControlsWidget> {
               ),
               SizedBox(width: 3.w),
               Text(
-                'Export & Filters',
+                'Download & Filters',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
@@ -214,7 +271,7 @@ class _ExportControlsWidgetState extends State<ExportControlsWidget> {
                           color: theme.colorScheme.onPrimary,
                           size: 4.w,
                         ),
-                  label: Text(_isExporting ? 'Exporting...' : 'Export CSV'),
+                  label: Text(_isExporting ? 'Downloading...' : 'Download CSV'),
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 1.5.h),
                   ),
@@ -242,7 +299,7 @@ class _ExportControlsWidgetState extends State<ExportControlsWidget> {
                 SizedBox(width: 2.w),
                 Expanded(
                   child: Text(
-                    '${widget.invoices.length} invoice${widget.invoices.length == 1 ? '' : 's'} ready for export',
+                    '${widget.invoices.length} invoice${widget.invoices.length == 1 ? '' : 's'} ready for download',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.w500,
