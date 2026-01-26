@@ -8,12 +8,18 @@ class QuickStatsWidget extends StatelessWidget {
   final double weeklyEarnings;
   final double pendingPayments;
   final int activeClients;
+  final VoidCallback? onTapWeekly;
+  final VoidCallback? onTapPending;
+  final VoidCallback? onTapClients;
 
   const QuickStatsWidget({
     super.key,
     required this.weeklyEarnings,
     required this.pendingPayments,
     required this.activeClients,
+    this.onTapWeekly,
+    this.onTapPending,
+    this.onTapClients,
   });
 
   @override
@@ -67,6 +73,7 @@ class QuickStatsWidget extends StatelessWidget {
                     '\$${weeklyEarnings.toStringAsFixed(2)}',
                     'trending_up',
                     theme.colorScheme.tertiary,
+                    onTap: onTapWeekly,
                   ),
                 ),
                 SizedBox(width: 3.w),
@@ -76,7 +83,8 @@ class QuickStatsWidget extends StatelessWidget {
                     'Pending Payments',
                     '\$${pendingPayments.toStringAsFixed(2)}',
                     'schedule',
-                    Colors.orange,
+                    theme.colorScheme.error,
+                    onTap: onTapPending,
                   ),
                 ),
               ],
@@ -92,6 +100,7 @@ class QuickStatsWidget extends StatelessWidget {
               'people',
               theme.colorScheme.primary,
               isFullWidth: true,
+              onTap: onTapClients,
             ),
           ),
         ],
@@ -106,20 +115,24 @@ class QuickStatsWidget extends StatelessWidget {
     String iconName,
     Color color, {
     bool isFullWidth = false,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
 
-    return Container(
-      width: isFullWidth ? double.infinity : null,
-      padding: EdgeInsets.all(3.w),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha: 0.1),
-          width: 1,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: isFullWidth ? double.infinity : null,
+        padding: EdgeInsets.all(3.w),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: color.withValues(alpha: 0.1),
+            width: 1,
+          ),
         ),
-      ),
       child: isFullWidth
           ? Row(
               children: [
@@ -194,6 +207,7 @@ class QuickStatsWidget extends StatelessWidget {
                 ),
               ],
             ),
+      ),
     );
   }
 }

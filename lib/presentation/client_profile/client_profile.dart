@@ -250,6 +250,15 @@ class _ClientProfileState extends State<ClientProfile>
             ),
             tooltip: 'Edit Client',
           ),
+          IconButton(
+            onPressed: _confirmDeleteClient,
+            icon: CustomIconWidget(
+              iconName: 'delete',
+              size: 24,
+              color: theme.colorScheme.error,
+            ),
+            tooltip: 'Delete Client',
+          ),
         ],
         elevation: 0,
         backgroundColor: theme.scaffoldBackgroundColor,
@@ -613,6 +622,66 @@ class _ClientProfileState extends State<ClientProfile>
           _emergencyContacts = [];
         }
       });
+    }
+  }
+
+  Future<void> _confirmDeleteClient() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Client'),
+        content: Text('Are you sure you want to delete ${_clientData["name"]}? This action cannot be undone and will delete all associated bookings, notes, and records.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _performDeleteClient();
+    }
+  }
+
+  Future<void> _performDeleteClient() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      await SupabaseService.instance.deleteClient(_clientData['id'].toString());
+
+      if (mounted) {
+        // Pop loading indicator
+        Navigator.pop(context);
+        // Pop profile screen and return true to indicate deletion
+        Navigator.pop(context, true);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Client deleted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        // Pop loading indicator
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete client: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

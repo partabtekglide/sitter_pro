@@ -277,12 +277,16 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
     );
   }
 
-  void _navigateToClientProfile(Map<String, dynamic> client) {
-    Navigator.pushNamed(
+  Future<void> _navigateToClientProfile(Map<String, dynamic> client) async {
+    final result = await Navigator.pushNamed(
       context,
       '/client-profile',
       arguments: client,
     );
+
+    if (result == true) {
+      _loadClients();
+    }
   }
 
   Future<void> _navigateToAddClient() async {

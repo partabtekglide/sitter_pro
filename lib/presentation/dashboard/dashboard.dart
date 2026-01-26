@@ -450,6 +450,32 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin, Ro
                   pendingPayments:
                       _dashboardStats['pendingPayments']?.toDouble() ?? 0.0,
                   activeClients: _dashboardStats['activeClients'] ?? 0,
+                  onTapWeekly: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.financialDashboard,
+                      arguments: {
+                        'period': 'This Week',
+                        'initialTab': 1, // Invoices tab
+                      },
+                    );
+                  },
+                  onTapPending: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.financialDashboard,
+                      arguments: {
+                        'period': 'This Year',
+                        'showPaid': false,
+                        'showPending': true,
+                        'showOverdue': true,
+                        'initialTab': 1, // Invoices tab
+                      },
+                    );
+                  },
+                  onTapClients: () {
+                    Navigator.pushNamed(context, AppRoutes.clientList);
+                  },
                 ),
 
                 SizedBox(height: 3.h),

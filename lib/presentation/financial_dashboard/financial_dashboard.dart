@@ -43,6 +43,29 @@ class _FinancialDashboardState extends State<FinancialDashboard>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args != null && args is Map<String, dynamic>) {
+      if (args.containsKey('period')) {
+        _selectedPeriod = args['period'];
+      }
+      if (args.containsKey('showPaid')) {
+        _showPaid = args['showPaid'];
+      }
+      if (args.containsKey('showPending')) {
+        _showPending = args['showPending'];
+      }
+      if (args.containsKey('showOverdue')) {
+        _showOverdue = args['showOverdue'];
+      }
+      if (args.containsKey('initialTab')) {
+        _tabController.index = args['initialTab'];
+      }
+    }
     _loadFinancialData();
   }
 

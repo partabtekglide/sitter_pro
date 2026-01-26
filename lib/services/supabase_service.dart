@@ -451,6 +451,20 @@ Future<void> signUp({
     }
   }
 
+  Future<void> deleteClient(String clientId) async {
+    try {
+      // Delete in order to respect foreign keys
+      await client.from('client_notes').delete().eq('client_id', clientId);
+      await client.from('pets_kids').delete().eq('client_id', clientId);
+      // await client.from('invoices').delete().eq('client_id', clientId);
+      await client.from('communications').delete().eq('receiver_id', clientId);
+      await client.from('bookings').delete().eq('client_id', clientId);
+      await client.from('clients').delete().eq('id', clientId);
+    } catch (error) {
+      throw Exception('Delete client failed: $error');
+    }
+  }
+
   Future<Map<String, dynamic>> createInlineClient({
     required String fullName,
     required String phone,
