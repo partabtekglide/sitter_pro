@@ -7,14 +7,14 @@ class ClientInfoCard extends StatelessWidget {
   final Map<String, dynamic> clientData;
   final VoidCallback? onCall;
   final VoidCallback? onMessage;
-  final VoidCallback? onNavigate;
+  // final VoidCallback? onNavigate;
 
   const ClientInfoCard({
     super.key,
     required this.clientData,
     this.onCall,
     this.onMessage,
-    this.onNavigate,
+    // this.onNavigate,
   });
 
   @override
@@ -203,15 +203,15 @@ class ClientInfoCard extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: IconButton(
-                    onPressed: onNavigate,
-                    icon: CustomIconWidget(
-                      iconName: 'directions',
-                      size: 20,
-                      color: theme.colorScheme.primary,
-                    ),
-                    tooltip: 'Navigate',
-                  ),
+                  // child: IconButton(
+                  //   onPressed: onNavigate,
+                  //   icon: CustomIconWidget(
+                  //     iconName: 'directions',
+                  //     size: 20,
+                  //     color: theme.colorScheme.primary,
+                  //   ),
+                  //   tooltip: 'Navigate',
+                  // ),
                 ),
               ],
             ),

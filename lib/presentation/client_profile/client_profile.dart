@@ -276,7 +276,7 @@ class _ClientProfileState extends State<ClientProfile>
             clientData: _clientData,
             onCall: _callClient,
             onMessage: _messageClient,
-            onNavigate: _navigateToClient,
+            // onNavigate: _navigateToClient,
           ),
 
           // Tab Bar
