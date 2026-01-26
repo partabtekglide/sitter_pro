@@ -310,6 +310,30 @@ class _FinancialDashboardState extends State<FinancialDashboard>
                                         _financialData['monthlyEarnings'] ?? 0,
                                     averageRate:
                                         _financialData['averageHourlyRate'] ?? 0,
+                                    onTapWeek: () {
+                                      setState(() {
+                                        _selectedPeriod = 'This Week';
+                                        _tabController.index = 1; // Invoices tab
+                                      });
+                                      _loadFinancialData();
+                                    },
+                                    onTapMonth: () {
+                                      setState(() {
+                                        _selectedPeriod = 'This Month';
+                                        _tabController.index = 1; // Invoices tab
+                                      });
+                                      _loadFinancialData();
+                                    },
+                                    onTapPending: () {
+                                      setState(() {
+                                        _selectedPeriod = 'This Year';
+                                        _showPaid = false;
+                                        _showPending = true;
+                                        _showOverdue = true;
+                                        _tabController.index = 1; // Invoices tab
+                                      });
+                                      _loadFinancialData();
+                                    },
                                   ),
 
                                   SizedBox(height: 4.h),

@@ -7,6 +7,10 @@ class FinancialStatsWidget extends StatelessWidget {
   final double weeklyEarnings;
   final double monthlyEarnings;
   final double averageRate;
+  final VoidCallback? onTapTotal;
+  final VoidCallback? onTapPending;
+  final VoidCallback? onTapWeek;
+  final VoidCallback? onTapMonth;
 
   const FinancialStatsWidget({
     super.key,
@@ -15,6 +19,10 @@ class FinancialStatsWidget extends StatelessWidget {
     required this.weeklyEarnings,
     required this.monthlyEarnings,
     required this.averageRate,
+    this.onTapTotal,
+    this.onTapPending,
+    this.onTapWeek,
+    this.onTapMonth,
   });
 
   @override
@@ -34,6 +42,7 @@ class FinancialStatsWidget extends StatelessWidget {
                 icon: Icons.trending_up,
                 color: Colors.green,
                 isMainCard: true,
+                onTap: onTapTotal,
               ),
             ),
             SizedBox(width: 3.w),
@@ -45,6 +54,7 @@ class FinancialStatsWidget extends StatelessWidget {
                 icon: Icons.hourglass_empty,
                 color: Colors.orange,
                 isMainCard: true,
+                onTap: onTapPending,
               ),
             ),
           ],
@@ -62,6 +72,7 @@ class FinancialStatsWidget extends StatelessWidget {
                 amount: weeklyEarnings,
                 icon: Icons.calendar_today,
                 color: theme.colorScheme.primary,
+                onTap: onTapWeek,
               ),
             ),
             SizedBox(width: 3.w),
@@ -72,6 +83,7 @@ class FinancialStatsWidget extends StatelessWidget {
                 amount: monthlyEarnings,
                 icon: Icons.calendar_month,
                 color: theme.colorScheme.secondary,
+                onTap: onTapMonth,
               ),
             ),
           ],
@@ -100,79 +112,84 @@ class FinancialStatsWidget extends StatelessWidget {
     required Color color,
     bool isMainCard = false,
     bool isRate = false,
+    VoidCallback? onTap,
   }) {
     final theme = Theme.of(context);
 
-    return Container(
-      padding: EdgeInsets.all(4.w),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outline.withValues(alpha: 0.1),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: EdgeInsets.all(4.w),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: theme.colorScheme.outline.withValues(alpha: 0.1),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(2.w),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 5.w),
-              ),
-              const Spacer(),
-              if (isMainCard)
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
                 Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 2.w,
-                    vertical: 0.5.h,
-                  ),
+                  padding: EdgeInsets.all(2.w),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    'MAIN',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 8.sp,
+                  child: Icon(icon, color: color, size: 5.w),
+                ),
+                const Spacer(),
+                if (isMainCard)
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 2.w,
+                      vertical: 0.5.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'MAIN',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 8.sp,
+                      ),
                     ),
                   ),
-                ),
-            ],
-          ),
-          SizedBox(height: 2.h),
-          Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              fontWeight: FontWeight.w500,
+              ],
             ),
-          ),
-          SizedBox(height: 0.5.h),
-          Text(
-            isRate
-                ? '\$${amount.toStringAsFixed(0)}/hr'
-                : '\$${amount.toStringAsFixed(2)}',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
+            SizedBox(height: 2.h),
+            Text(
+              title,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 0.5.h),
+            Text(
+              isRate
+                  ? '\$${amount.toStringAsFixed(0)}/hr'
+                  : '\$${amount.toStringAsFixed(2)}',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
