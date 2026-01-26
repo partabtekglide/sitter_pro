@@ -27,28 +27,41 @@ void main() async {
   runApp(const SitterProManagerApp());
 }
 
-class SitterProManagerApp extends StatelessWidget {
+class SitterProManagerApp extends StatefulWidget {
   const SitterProManagerApp({super.key});
 
+  static final ValueNotifier<ThemeMode> themeNotifier =
+      ValueNotifier(ThemeMode.system);
+
+  @override
+  State<SitterProManagerApp> createState() => _SitterProManagerAppState();
+}
+
+class _SitterProManagerAppState extends State<SitterProManagerApp> {
   @override
   Widget build(BuildContext context) {
     return Sizer(
       builder: (context, orientation, deviceType) {
-        return MaterialApp(
-          title: 'Sitter Pro Manager',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.system,
-          initialRoute: AppRoutes.initial,
-          routes: AppRoutes.routes,
-          navigatorObservers: [routeObserver],
-          builder: (context, child) {
-            return MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: const TextScaler.linear(1.0)),
-              child: child!,
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: SitterProManagerApp.themeNotifier,
+          builder: (_, ThemeMode currentMode, __) {
+            return MaterialApp(
+              title: 'Sitter Pro Manager',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: currentMode,
+              initialRoute: AppRoutes.initial,
+              routes: AppRoutes.routes,
+              navigatorObservers: [routeObserver],
+              builder: (context, child) {
+                return MediaQuery(
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(textScaler: const TextScaler.linear(1.0)),
+                  child: child!,
+                );
+              },
             );
           },
         );

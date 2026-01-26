@@ -12,7 +12,7 @@ import './widgets/greeting_header_widget.dart';
 import './widgets/quick_stats_widget.dart';
 import './widgets/recent_activity_widget.dart';
 import './widgets/today_schedule_widget.dart';
-import './widgets/weather_widget.dart';
+// import './widgets/weather_widget.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -419,16 +419,31 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin, Ro
                 GreetingHeaderWidget(
                   sitterName: _userName,
                   currentDate: DateTime.now(),
+                  onThemeToggle: () {
+                    final currentMode = SitterProManagerApp.themeNotifier.value;
+                    if (currentMode == ThemeMode.light) {
+                      SitterProManagerApp.themeNotifier.value = ThemeMode.dark;
+                    } else if (currentMode == ThemeMode.dark) {
+                      SitterProManagerApp.themeNotifier.value = ThemeMode.system;
+                    } else {
+                      // If system, toggle based on current brightness
+                      if (Theme.of(context).brightness == Brightness.light) {
+                        SitterProManagerApp.themeNotifier.value = ThemeMode.dark;
+                      } else {
+                        SitterProManagerApp.themeNotifier.value = ThemeMode.light;
+                      }
+                    }
+                  },
                 ),
 
-                SizedBox(height: 3.h),
+                // SizedBox(height: 3.h),
 
-                // Weather Widget
-                WeatherWidget(
-                  weatherData: _weatherData,
-                  isLocationEnabled: _isLocationEnabled,
-                  onEnableLocation: _onEnableLocation,
-                ),
+                // // Weather Widget
+                // WeatherWidget(
+                //   weatherData: _weatherData,
+                //   isLocationEnabled: _isLocationEnabled,
+                //   onEnableLocation: _onEnableLocation,
+                // ),
 
                 SizedBox(height: 3.h),
 

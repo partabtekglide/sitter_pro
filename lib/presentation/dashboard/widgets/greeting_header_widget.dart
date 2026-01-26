@@ -7,11 +7,13 @@ import '../../../widgets/custom_icon_widget.dart';
 class GreetingHeaderWidget extends StatelessWidget {
   final String sitterName;
   final DateTime currentDate;
+  final VoidCallback? onThemeToggle;
 
   const GreetingHeaderWidget({
     super.key,
     required this.sitterName,
     required this.currentDate,
+    this.onThemeToggle,
   });
 
   @override
@@ -64,16 +66,22 @@ class GreetingHeaderWidget extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: EdgeInsets.all(2.w),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: CustomIconWidget(
-              iconName: 'wb_sunny',
-              color: theme.colorScheme.primary,
-              size: 6.w,
+          InkWell(
+            onTap: onThemeToggle,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: EdgeInsets.all(2.w),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: CustomIconWidget(
+                iconName: theme.brightness == Brightness.light
+                    ? 'wb_sunny'
+                    : 'nightlight_round',
+                color: theme.colorScheme.primary,
+                size: 6.w,
+              ),
             ),
           ),
         ],
