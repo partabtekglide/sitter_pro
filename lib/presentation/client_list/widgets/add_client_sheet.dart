@@ -81,15 +81,15 @@ class _AddClientSheetState extends State<AddClientSheet> {
                   ),
                 ),
                 SizedBox(height: 2.h),
-
-                TextField(
-                  controller: phoneController,
+                 TextField(
+                  controller: addressController,
                   decoration: const InputDecoration(
-                    labelText: 'Phone Number *',
+                    labelText: 'Address *',
                     border: OutlineInputBorder(),
                   ),
-                  keyboardType: TextInputType.phone,
+                  maxLines: 2,
                 ),
+                
                 SizedBox(height: 2.h),
 
                 TextField(
@@ -102,14 +102,15 @@ class _AddClientSheetState extends State<AddClientSheet> {
                 ),
                 SizedBox(height: 2.h),
 
-                TextField(
-                  controller: addressController,
+               TextField(
+                  controller: phoneController,
                   decoration: const InputDecoration(
-                    labelText: 'Address *',
+                    labelText: 'Phone Number *',
                     border: OutlineInputBorder(),
                   ),
-                  maxLines: 2,
+                  keyboardType: TextInputType.phone,
                 ),
+                
                 SizedBox(height: 2.h),
 
                 TextField(

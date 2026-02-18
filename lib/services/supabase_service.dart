@@ -493,6 +493,10 @@ Future<void> signUp({
     }).select('''
         id,
         user_id,
+        full_name,
+        phone,
+        email,
+        address,
         emergency_contact_name,
         emergency_contact_phone,
         special_instructions,

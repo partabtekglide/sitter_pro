@@ -78,6 +78,7 @@ class _ClientProfileState extends State<ClientProfile>
       if (mounted) {
         setState(() {
           _bookings = formatted;
+          _clientData['totalBookings'] = formatted.length;
           _isLoadingBookings = false;
         });
       }
@@ -142,7 +143,7 @@ class _ClientProfileState extends State<ClientProfile>
         "address": args['address'] ?? '',
         "avatar": args['avatar'],
         "avatarSemanticLabel": args['semanticLabel'],
-        "joinDate": args['joinDate'] ?? "2024-01-01",
+        "joinDate": args['created_at'] ?? args['joinDate'] ?? "2024-02-02",
         "totalBookings": 0, // Placeholder
         "preferredServices": args['serviceTypes'] ?? [],
         "specialInstructions": args['specialInstructions'] ??
@@ -150,7 +151,7 @@ class _ClientProfileState extends State<ClientProfile>
         "emergency_contact_name": args['emergency_contact_name'],
         "emergency_contact_phone": args['emergency_contact_phone'],
       };
-
+        print("clientData: $_clientData");
       // Handle emergency contacts
       if (args['emergency_contact_name'] != null) {
         _emergencyContacts = [
@@ -572,25 +573,26 @@ class _ClientProfileState extends State<ClientProfile>
     );
   }
 
-  String _formatJoinDate(String dateString) {
+  String _formatJoinDate(dynamic dateValue) {
+    if (dateValue == null) return 'Unknown';
     try {
-      final date = DateTime.parse(dateString);
+      DateTime date;
+      if (dateValue is DateTime) {
+        date = dateValue;
+      } else if (dateValue is String) {
+        if (dateValue.isEmpty) return 'Unknown';
+        date = DateTime.parse(dateValue);
+      } else {
+        return 'Unknown';
+      }
+      
       final months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec'
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
       ];
       return '${months[date.month - 1]} ${date.year}';
     } catch (e) {
+      print('Error formatting join date: $e');
       return 'Unknown';
     }
   }

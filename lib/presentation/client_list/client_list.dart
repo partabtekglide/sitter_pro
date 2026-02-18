@@ -105,6 +105,8 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
           "emergency_contact_name": client['emergency_contact_name'],
           "emergency_contact_phone": client['emergency_contact_phone'],
           "specialInstructions": client['special_instructions'],
+          "joinDate": client['created_at']?.toString(),
+          "created_at": client['created_at']?.toString(),
         };
       }).toList();
 
