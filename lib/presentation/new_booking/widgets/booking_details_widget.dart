@@ -46,6 +46,15 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
   }
 
   @override
+  void didUpdateWidget(covariant BookingDetailsWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.address != widget.address &&
+        _addressController.text != widget.address) {
+      _addressController.text = widget.address;
+    }
+  }
+
+  @override
   void dispose() {
     _addressController.dispose();
     _instructionsController.dispose();

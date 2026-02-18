@@ -450,6 +450,7 @@ class _NewBookingState extends State<NewBooking> {
                               'clientId': client['id'],
                               'clientName': client['name'],
                               'hourlyRate': client['preferredRate'],
+                              'address': client['address'],
                             });
                           },
                           onAddClient: _onAddClient,
