@@ -28,8 +28,17 @@ class _ClientSelectionStepState extends State<ClientSelectionStep> {
   @override
   void initState() {
     super.initState();
-    _filteredClients = widget.clients;
     _searchController.addListener(_filterClients);
+    _filterClients(); // Initial filter and sort
+  }
+
+  @override
+  void didUpdateWidget(covariant ClientSelectionStep oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedClient != widget.selectedClient ||
+        oldWidget.clients != widget.clients) {
+      _filterClients();
+    }
   }
 
   @override
@@ -41,16 +50,27 @@ class _ClientSelectionStepState extends State<ClientSelectionStep> {
 
   void _filterClients() {
     final query = _searchController.text.toLowerCase();
+    final filtered = widget.clients.where((client) {
+      final name = client['name'].toString().toLowerCase();
+      final email = client['email'].toString().toLowerCase();
+      final phone = client['phone'].toString().toLowerCase();
+      return name.contains(query) ||
+          email.contains(query) ||
+          phone.contains(query);
+    }).toList();
+
+    // Sort so that the selected client is at the top
+    if (widget.selectedClient != null) {
+      final selectedId = widget.selectedClient!['id'];
+      filtered.sort((a, b) {
+        if (a['id'] == selectedId) return -1;
+        if (b['id'] == selectedId) return 1;
+        return 0;
+      });
+    }
+
     setState(() {
-      _filteredClients =
-          widget.clients.where((client) {
-            final name = client['name'].toString().toLowerCase();
-            final email = client['email'].toString().toLowerCase();
-            final phone = client['phone'].toString().toLowerCase();
-            return name.contains(query) ||
-                email.contains(query) ||
-                phone.contains(query);
-          }).toList();
+      _filteredClients = filtered;
     });
   }
 

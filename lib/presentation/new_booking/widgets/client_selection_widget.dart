@@ -36,13 +36,29 @@ class _ClientSelectionWidgetState extends State<ClientSelectionWidget> {
   }
 
   List<Map<String, dynamic>> get _filteredClients {
-    if (_searchQuery.isEmpty) return widget.clients;
-    return widget.clients.where((client) {
-      return client['name'].toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          ) ||
-          client['address'].toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
+    List<Map<String, dynamic>> filtered = widget.clients;
+    if (_searchQuery.isNotEmpty) {
+      filtered = widget.clients.where((client) {
+        return client['name'].toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) ||
+            client['address'].toLowerCase().contains(_searchQuery.toLowerCase());
+      }).toList();
+    } else {
+      // Create a copy to avoid modifying the original list
+      filtered = List.from(widget.clients);
+    }
+
+    // Sort so that the selected client is at the top
+    if (widget.selectedClientId.isNotEmpty) {
+      filtered.sort((a, b) {
+        if (a['id'] == widget.selectedClientId) return -1;
+        if (b['id'] == widget.selectedClientId) return 1;
+        return 0;
+      });
+    }
+
+    return filtered;
   }
 
   @override
