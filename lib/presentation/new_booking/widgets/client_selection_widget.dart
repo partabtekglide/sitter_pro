@@ -464,240 +464,238 @@ class _ClientSelectionWidgetState extends State<ClientSelectionWidget> {
         minChildSize: 0.5,
         maxChildSize: 0.9,
         builder: (context, scrollController) {
-          return SingleChildScrollView(
-            controller: scrollController,
-            padding: EdgeInsets.all(4.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 12.w,
-                    height: 0.5.h,
-                    decoration: BoxDecoration(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outline.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 3.h),
-
-                // Header
-                Text(
-                  'Add New Client',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-
-                SizedBox(height: 3.h),
-
-                // Form fields
-                TextField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name *',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-
-                SizedBox(height: 2.h),
-
-                TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number *',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.phone,
-                ),
-
-                SizedBox(height: 2.h),
-
-                TextField(
-                  controller: emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email Address *',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-
-                SizedBox(height: 2.h),
-
-                TextField(
-                  controller: addressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Address *',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 2,
-                ),
-
-                SizedBox(height: 2.h),
-
-                TextField(
-                  controller: emergencyContactController,
-                  decoration: const InputDecoration(
-                    labelText: 'Emergency Contact Name',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-
-                SizedBox(height: 2.h),
-
-                TextField(
-                  controller: emergencyPhoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Emergency Contact Phone',
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.phone,
-                ),
-
-                SizedBox(height: 2.h),
-
-                TextField(
-                  controller: notesController,
-                  decoration: const InputDecoration(
-                    labelText: 'Special Notes',
-                    border: OutlineInputBorder(),
-                    hintText: 'Any special instructions or notes...',
-                  ),
-                  maxLines: 3,
-                ),
-
-                SizedBox(height: 4.h),
-
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              padding: EdgeInsets.all(4.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 12.w,
+                      height: 0.5.h,
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                    SizedBox(width: 3.w),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          if (nameController.text.isNotEmpty &&
-                              phoneController.text.isNotEmpty &&
-                              emailController.text.isNotEmpty &&
-                              addressController.text.isNotEmpty) {
-                            try {
-                              // Show loading
-                              showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder:
-                                    (context) => const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                              );
+                  ),
 
-                              // Create user profile first
-                              final userId =
-                                  SupabaseService.instance.client
-                                      .from('user_profiles')
-                                      .insert({
-                                        'full_name': nameController.text,
-                                        'email': emailController.text,
-                                        'phone': phoneController.text,
-                                        'address': addressController.text,
-                                        'role': 'client',
-                                      })
-                                      .select('id')
-                                      .single();
+                  SizedBox(height: 3.h),
 
-                              final userResult = await userId;
+                  // Header
+                  Text(
+                    'Add New Client',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
 
-                              // Then create client record
-                              final clientResponse =
-                                  await SupabaseService.instance.client
-                                      .from('clients')
-                                      .insert({
-                                        'user_id': userResult['id'],
-                                        'emergency_contact_name':
-                                            emergencyContactController.text,
-                                        'emergency_contact_phone':
-                                            emergencyPhoneController.text,
-                                        'special_instructions':
-                                            notesController.text,
-                                      })
-                                      .select('''
-                                id,
-                                user_profiles!inner (
-                                  full_name,
-                                  phone,
-                                  address,
-                                  avatar_url
-                                ),
-                                emergency_contact_name,
-                                emergency_contact_phone,
-                                special_instructions
-                              ''')
-                                      .single();
+                  SizedBox(height: 3.h),
 
-                              // Close loading dialog
-                              Navigator.pop(context);
+                  // Form fields
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Full Name *',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
 
-                              // Close bottom sheet with new client data
-                              Navigator.of(context).pop({
-                                'id': clientResponse['id'],
-                                'name':
-                                    clientResponse['user_profiles']['full_name'],
-                                'phone':
-                                    clientResponse['user_profiles']['phone'],
-                                'address':
-                                    clientResponse['user_profiles']['address'],
-                                'photo':
-                                    clientResponse['user_profiles']['avatar_url'] ??
-                                    'https://images.unsplash.com/photo-1494790108755-2616b612b47c',
-                                'pets': [],
-                                'preferredRate': 25.0,
-                                'emergency_contact_name':
-                                    clientResponse['emergency_contact_name'],
-                                'emergency_contact_phone':
-                                    clientResponse['emergency_contact_phone'],
-                                'special_instructions':
-                                    clientResponse['special_instructions'],
-                              });
-                            } catch (error) {
-                              // Close loading dialog
-                              Navigator.pop(context);
+                  SizedBox(height: 2.h),
 
+                  TextField(
+                    controller: phoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone Number *',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+
+                  SizedBox(height: 2.h),
+
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email Address *',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+
+                  SizedBox(height: 2.h),
+
+                  TextField(
+                    controller: addressController,
+                    decoration: const InputDecoration(
+                      labelText: 'Address *',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 2,
+                  ),
+
+                  SizedBox(height: 2.h),
+
+                  TextField(
+                    controller: emergencyContactController,
+                    decoration: const InputDecoration(
+                      labelText: 'Emergency Contact Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  SizedBox(height: 2.h),
+
+                  TextField(
+                    controller: emergencyPhoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'Emergency Contact Phone',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+
+                  SizedBox(height: 2.h),
+
+                  TextField(
+                    controller: notesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Special Notes',
+                      border: OutlineInputBorder(),
+                      hintText: 'Any special instructions or notes...',
+                    ),
+                    maxLines: 3,
+                  ),
+
+                  SizedBox(height: 4.h),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                      SizedBox(width: 3.w),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (nameController.text.isNotEmpty &&
+                                phoneController.text.isNotEmpty &&
+                                emailController.text.isNotEmpty &&
+                                addressController.text.isNotEmpty) {
+                              try {
+                                // Show loading
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+
+                                // Create user profile first
+                                final userId = SupabaseService.instance.client
+                                    .from('user_profiles')
+                                    .insert({
+                                  'full_name': nameController.text,
+                                  'email': emailController.text,
+                                  'phone': phoneController.text,
+                                  'address': addressController.text,
+                                  'role': 'client',
+                                }).select('id').single();
+
+                                final userResult = await userId;
+
+                                // Then create client record
+                                final clientResponse = await SupabaseService
+                                    .instance.client
+                                    .from('clients')
+                                    .insert({
+                                  'user_id': userResult['id'],
+                                  'emergency_contact_name':
+                                      emergencyContactController.text,
+                                  'emergency_contact_phone':
+                                      emergencyPhoneController.text,
+                                  'special_instructions': notesController.text,
+                                }).select('''
+                                  id,
+                                  user_profiles!inner (
+                                    full_name,
+                                    phone,
+                                    address,
+                                    avatar_url
+                                  ),
+                                  emergency_contact_name,
+                                  emergency_contact_phone,
+                                  special_instructions
+                                ''').single();
+
+                                // Close loading dialog
+                                Navigator.pop(context);
+
+                                // Close bottom sheet with new client data
+                                Navigator.of(context).pop({
+                                  'id': clientResponse['id'],
+                                  'name': clientResponse['user_profiles']
+                                      ['full_name'],
+                                  'phone': clientResponse['user_profiles']
+                                      ['phone'],
+                                  'address': clientResponse['user_profiles']
+                                      ['address'],
+                                  'photo': clientResponse['user_profiles']
+                                          ['avatar_url'] ??
+                                      'https://images.unsplash.com/photo-1494790108755-2616b612b47c',
+                                  'pets': [],
+                                  'preferredRate': 25.0,
+                                  'emergency_contact_name':
+                                      clientResponse['emergency_contact_name'],
+                                  'emergency_contact_phone':
+                                      clientResponse['emergency_contact_phone'],
+                                  'special_instructions':
+                                      clientResponse['special_instructions'],
+                                });
+                              } catch (error) {
+                                // Close loading dialog
+                                Navigator.pop(context);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content:
+                                        Text('Failed to add client: $error'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Failed to add client: $error'),
-                                  backgroundColor: Colors.red,
+                                const SnackBar(
+                                  content: Text(
+                                    'Please fill all required fields',
+                                  ),
+                                  backgroundColor: Colors.orange,
                                 ),
                               );
                             }
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Please fill all required fields',
-                                ),
-                                backgroundColor: Colors.orange,
-                              ),
-                            );
-                          }
-                        },
-                        child: const Text('Add Client'),
+                          },
+                          child: const Text('Add Client'),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
 
-                SizedBox(height: 2.h),
-              ],
+                  SizedBox(height: 2.h),
+                ],
+              ),
             ),
           );
         },
