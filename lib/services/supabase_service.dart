@@ -420,7 +420,8 @@ Future<void> signUp({
           id,
           name,
           type
-        )
+        ),
+        preferred_services
       ''').order('created_at', ascending: false);
 
     return List<Map<String, dynamic>>.from(response);
@@ -435,6 +436,7 @@ Future<void> signUp({
     String? emergencyContactName,
     String? emergencyContactPhone,
     String? notes,
+    List<String>? preferredServices,
   }) async {
     try {
       await client.from('clients').update({
@@ -445,6 +447,7 @@ Future<void> signUp({
         'emergency_contact_name': emergencyContactName,
         'emergency_contact_phone': emergencyContactPhone,
         'special_instructions': notes,
+        'preferred_services': preferredServices,
       }).eq('id', clientId);
     } catch (error) {
       throw Exception('Update client failed: $error');
@@ -474,6 +477,7 @@ Future<void> signUp({
     String? emergencyContactPhone,
     String? notes,
     double? preferredRate,
+    List<String>? preferredServices,
   }) async {
     final user = currentUser;
     if (user == null) {
@@ -490,6 +494,7 @@ Future<void> signUp({
       'emergency_contact_phone': emergencyContactPhone,
       'special_instructions': notes,
       'preferred_rate': preferredRate ?? 25.0,
+      'preferred_services': preferredServices ?? [],
     }).select('''
         id,
         user_id,
@@ -502,6 +507,7 @@ Future<void> signUp({
         special_instructions,
         created_at,
         preferred_rate,
+        preferred_services,
         user_profiles (
           full_name,
           phone,

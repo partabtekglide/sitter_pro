@@ -85,10 +85,7 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
               as String,
           "semanticLabel":
               "Client profile for ${(client['full_name'] ?? 'Client')}",
-          "serviceTypes": <String>[
-            // Placeholder until you have real service types in DB
-            "Babysitting"
-          ],
+          "serviceTypes": List<String>.from(client['preferred_services'] ?? []),
           "lastBookingDate": null, // later: client['last_booking_date']
           "upcomingBookingDate": null, // later: client['upcoming_booking_date']
           "hasOverduePayment":
@@ -312,6 +309,7 @@ class _ClientListState extends State<ClientList> with TickerProviderStateMixin {
         emergencyContactPhone: result['emergency_phone'],
         notes: result['notes'],
         preferredRate: 25.0, // Default rate
+        preferredServices: result['preferred_services'],
       );
 
       // 2) List refresh karo

@@ -17,6 +17,14 @@ class _AddClientSheetState extends State<AddClientSheet> {
   final emergencyPhoneController = TextEditingController();
   final notesController = TextEditingController();
 
+  final List<String> availableServices = [
+    'Babysitting',
+    'Pet Sitting',
+    'House Sitting',
+    'ElderlyCare',
+  ];
+  List<String> selectedServices = [];
+
   @override
   void dispose() {
     nameController.dispose();
@@ -135,6 +143,47 @@ class _AddClientSheetState extends State<AddClientSheet> {
                   ),
                   SizedBox(height: 2.h),
 
+                  Text(
+                    'Preferred Services',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  SizedBox(height: 1.h),
+                  Wrap(
+                    spacing: 2.w,
+                    runSpacing: 1.h,
+                    children: availableServices.map((service) {
+                      final isSelected = selectedServices.contains(service);
+                      return FilterChip(
+                        label: Text(service),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setState(() {
+                            if (selected) {
+                              selectedServices.add(service);
+                            } else {
+                              selectedServices.remove(service);
+                            }
+                          });
+                        },
+                        selectedColor: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.2),
+                        checkmarkColor: Theme.of(context).colorScheme.primary,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurface,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 2.h),
+
                   TextField(
                     controller: notesController,
                     decoration: const InputDecoration(
@@ -173,6 +222,7 @@ class _AddClientSheetState extends State<AddClientSheet> {
                                 'emergency_phone':
                                     emergencyPhoneController.text,
                                 'notes': notesController.text,
+                                'preferred_services': selectedServices,
                               });
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(

@@ -24,24 +24,36 @@ class _EditClientScreenState extends State<EditClientScreen> {
   late TextEditingController _notesController;
   bool _isLoading = false;
 
+  final List<String> _availableServices = [
+    'Babysitting',
+    'Pet Sitting',
+    'House Sitting',
+    'ElderlyCare',
+  ];
+  List<String> _selectedServices = [];
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.clientData['name']);
     _phoneController = TextEditingController(text: widget.clientData['phone']);
     _emailController = TextEditingController(text: widget.clientData['email']);
-    _addressController = TextEditingController(text: widget.clientData['address']);
-    
-    // Extract emergency contact info if available (assuming it might be in the map or nested)
-    // Based on ClientProfile, it seems emergency contacts are in a separate list usually, 
-    // but createInlineClient puts them in the client table too. 
-    // Let's assume the passed clientData has these fields if they were fetched.
-    // If not, we might need to fetch them or rely on what's passed.
-    // Looking at ClientProfile, it passes a constructed map.
-    
-    _emergencyNameController = TextEditingController(text: widget.clientData['emergency_contact_name'] ?? '');
-    _emergencyPhoneController = TextEditingController(text: widget.clientData['emergency_contact_phone'] ?? '');
-    _notesController = TextEditingController(text: widget.clientData['specialInstructions'] ?? '');
+    _addressController =
+        TextEditingController(text: widget.clientData['address']);
+
+    _emergencyNameController = TextEditingController(
+        text: widget.clientData['emergency_contact_name'] ?? '');
+    _emergencyPhoneController = TextEditingController(
+        text: widget.clientData['emergency_contact_phone'] ?? '');
+    _notesController =
+        TextEditingController(text: widget.clientData['specialInstructions'] ?? '');
+
+    // Load existing services
+    if (widget.clientData['preferredServices'] != null) {
+      _selectedServices = List<String>.from(widget.clientData['preferredServices']);
+    } else if (widget.clientData['serviceTypes'] != null) {
+      _selectedServices = List<String>.from(widget.clientData['serviceTypes']);
+    }
   }
 
   @override
@@ -71,6 +83,7 @@ class _EditClientScreenState extends State<EditClientScreen> {
         emergencyContactName: _emergencyNameController.text.trim(),
         emergencyContactPhone: _emergencyPhoneController.text.trim(),
         notes: _notesController.text.trim(),
+        preferredServices: _selectedServices,
       );
 
       if (!mounted) return;
@@ -89,11 +102,15 @@ class _EditClientScreenState extends State<EditClientScreen> {
         'emergency_contact_name': _emergencyNameController.text.trim(),
         'emergency_contact_phone': _emergencyPhoneController.text.trim(),
         'specialInstructions': _notesController.text.trim(),
+        'serviceTypes': _selectedServices,
+        'preferredServices': _selectedServices,
       });
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating client: $e'), backgroundColor: Colors.red),
+        SnackBar(
+            content: Text('Error updating client: $e'),
+            backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -125,7 +142,8 @@ class _EditClientScreenState extends State<EditClientScreen> {
                       controller: _nameController,
                       label: 'Full Name',
                       icon: Icons.person,
-                      validator: (v) => v?.isEmpty == true ? 'Name is required' : null,
+                      validator: (v) =>
+                          v?.isEmpty == true ? 'Name is required' : null,
                     ),
                     SizedBox(height: 2.h),
                     _buildTextField(
@@ -133,7 +151,8 @@ class _EditClientScreenState extends State<EditClientScreen> {
                       label: 'Phone',
                       icon: Icons.phone,
                       inputType: TextInputType.phone,
-                      validator: (v) => v?.isEmpty == true ? 'Phone is required' : null,
+                      validator: (v) =>
+                          v?.isEmpty == true ? 'Phone is required' : null,
                     ),
                     SizedBox(height: 2.h),
                     _buildTextField(
@@ -141,7 +160,8 @@ class _EditClientScreenState extends State<EditClientScreen> {
                       label: 'Email',
                       icon: Icons.email,
                       inputType: TextInputType.emailAddress,
-                      validator: (v) => v?.isEmpty == true ? 'Email is required' : null,
+                      validator: (v) =>
+                          v?.isEmpty == true ? 'Email is required' : null,
                     ),
                     SizedBox(height: 2.h),
                     _buildTextField(
@@ -149,9 +169,10 @@ class _EditClientScreenState extends State<EditClientScreen> {
                       label: 'Address',
                       icon: Icons.location_on,
                       maxLines: 2,
-                      validator: (v) => v?.isEmpty == true ? 'Address is required' : null,
+                      validator: (v) =>
+                          v?.isEmpty == true ? 'Address is required' : null,
                     ),
-                    
+
                     SizedBox(height: 4.h),
                     _buildSectionTitle(context, 'Emergency Contact'),
                     SizedBox(height: 2.h),
@@ -166,6 +187,40 @@ class _EditClientScreenState extends State<EditClientScreen> {
                       label: 'Contact Phone',
                       icon: Icons.phone_in_talk,
                       inputType: TextInputType.phone,
+                    ),
+
+                    SizedBox(height: 4.h),
+                    _buildSectionTitle(context, 'Preferred Services'),
+                    SizedBox(height: 2.h),
+                    Wrap(
+                      spacing: 2.w,
+                      runSpacing: 1.h,
+                      children: _availableServices.map((service) {
+                        final isSelected = _selectedServices.contains(service);
+                        return FilterChip(
+                          label: Text(service),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedServices.add(service);
+                              } else {
+                                _selectedServices.remove(service);
+                              }
+                            });
+                          },
+                          selectedColor:
+                              theme.colorScheme.primary.withValues(alpha: 0.2),
+                          checkmarkColor: theme.colorScheme.primary,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurface,
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.w400,
+                          ),
+                        );
+                      }).toList(),
                     ),
 
                     SizedBox(height: 4.h),
@@ -210,9 +265,9 @@ class _EditClientScreenState extends State<EditClientScreen> {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: Theme.of(context).colorScheme.primary,
-      ),
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
     );
   }
 
