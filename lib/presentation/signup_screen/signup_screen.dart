@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
@@ -260,6 +261,10 @@ class _SignupScreenState extends State<SignupScreen> {
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
                       textInputAction: TextInputAction.next,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
                       decoration: InputDecoration(
                         labelText: 'Phone Number',
                         prefixIcon: const Icon(Icons.phone_outlined),
@@ -269,8 +274,8 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       validator: (value) {
                         if (value != null && value.isNotEmpty) {
-                          if (value.length < 10) {
-                            return 'Please enter a valid phone number';
+                          if (value.length < 10 || value.length > 11) {
+                            return 'Enter a valid 10 or 11 digit phone number';
                           }
                         }
                         return null;

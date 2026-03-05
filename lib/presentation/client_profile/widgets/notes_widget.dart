@@ -143,19 +143,19 @@ class _NotesWidgetState extends State<NotesWidget> {
                   ),
                 ),
               ),
-              Row(
-                children: [
-                  Text(
-                    'Rich Text',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  SizedBox(width: 2.w),
-                  Switch(
-                    value: _useRichText,
-                    onChanged: (value) => setState(() => _useRichText = value),
-                  ),
-                ],
-              ),
+              // Row(
+              //   children: [
+              //     Text(
+              //       'Rich Text',
+              //       style: theme.textTheme.bodySmall,
+              //     ),
+              //     SizedBox(width: 2.w),
+              //     Switch(
+              //       value: _useRichText,
+              //       onChanged: (value) => setState(() => _useRichText = value),
+              //     ),
+              //   ],
+              // ),
             ],
           ),
           SizedBox(height: 2.h),

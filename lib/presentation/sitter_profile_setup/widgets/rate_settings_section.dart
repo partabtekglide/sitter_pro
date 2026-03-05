@@ -28,13 +28,13 @@ class _RateSettingsSectionState extends State<RateSettingsSection> {
       children: [
         Text(
           'Default Hourly Rate',
-          style: AppTheme.lightTheme.textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleMedium,
         ),
         SizedBox(height: 1.h),
         Text(
           'Set your standard hourly rate. You can adjust this for individual clients.',
-          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurface
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface
                 .withValues(alpha: 0.7),
           ),
         ),
@@ -53,34 +53,34 @@ class _RateSettingsSectionState extends State<RateSettingsSection> {
                   labelText: 'Hourly Rate',
                   prefixText: '\$ ',
                   prefixStyle:
-                      AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.onSurface,
+                      Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
                   ),
                   suffixText: '/hour',
                   suffixStyle:
-                      AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.onSurface
+                      Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurface
                         .withValues(alpha: 0.7),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: AppTheme.lightTheme.colorScheme.outline
+                      color: Theme.of(context).colorScheme.outline
                           .withValues(alpha: 0.3),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: AppTheme.lightTheme.colorScheme.outline
+                      color: Theme.of(context).colorScheme.outline
                           .withValues(alpha: 0.3),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: AppTheme.lightTheme.colorScheme.primary,
+                      color: Theme.of(context).colorScheme.primary,
                       width: 2,
                     ),
                   ),
@@ -109,8 +109,8 @@ class _RateSettingsSectionState extends State<RateSettingsSection> {
         SizedBox(height: 2.h),
         Text(
           'Suggested rates in your area:',
-          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurface
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface
                 .withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
@@ -128,10 +128,10 @@ class _RateSettingsSectionState extends State<RateSettingsSection> {
           padding: EdgeInsets.all(3.w),
           decoration: BoxDecoration(
             color:
-                AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppTheme.lightTheme.colorScheme.primary
+              color: Theme.of(context).colorScheme.primary
                   .withValues(alpha: 0.3),
             ),
           ),
@@ -139,15 +139,15 @@ class _RateSettingsSectionState extends State<RateSettingsSection> {
             children: [
               CustomIconWidget(
                 iconName: 'lightbulb',
-                color: AppTheme.lightTheme.colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
               SizedBox(width: 2.w),
               Expanded(
                 child: Text(
                   'Tip: Consider your experience, certifications, and local market rates when setting your price.',
-                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.primary,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
@@ -167,17 +167,17 @@ class _RateSettingsSectionState extends State<RateSettingsSection> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
         decoration: BoxDecoration(
-          color: AppTheme.lightTheme.colorScheme.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color:
-                AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3),
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
           ),
         ),
         child: Text(
           '\$$rate/hr',
-          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurface,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w500,
           ),
         ),

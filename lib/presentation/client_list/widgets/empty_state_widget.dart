@@ -28,7 +28,7 @@ class EmptyStateWidget extends StatelessWidget {
             _buildIllustration(colorScheme),
             SizedBox(height: 4.h),
             Text(
-              'No Clients Yettttttt',
+              'No Clients Yet',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: colorScheme.onSurface,

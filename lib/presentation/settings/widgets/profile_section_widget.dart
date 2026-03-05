@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -340,8 +341,8 @@ class _ProfileSectionWidgetState extends State<ProfileSectionWidget> {
                     keyboardType: TextInputType.phone,
                     validator: (value) {
                       if (value != null && value.isNotEmpty) {
-                        if (!RegExp(r'^\+?[\d\s\-\(\)]+$').hasMatch(value)) {
-                          return 'Enter a valid phone number';
+                        if (value.length < 10 || value.length > 11) {
+                          return 'Enter a valid 10 or 11 digit phone number';
                         }
                       }
                       return null;
@@ -394,6 +395,9 @@ class _ProfileSectionWidgetState extends State<ProfileSectionWidget> {
       maxLength: maxLength,
       keyboardType: keyboardType,
       validator: validator,
+      inputFormatters: keyboardType == TextInputType.phone 
+          ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)] 
+          : null,
       style: GoogleFonts.inter(
         fontSize: 14,
         color: enabled ? Colors.black87 : Colors.grey[600],
@@ -431,6 +435,7 @@ class _ProfileSectionWidgetState extends State<ProfileSectionWidget> {
           horizontal: 16,
           vertical: 12,
         ),
+        hintText: keyboardType == TextInputType.phone ? 'Enter 10-11 digit number' : null,
       ),
     );
   }

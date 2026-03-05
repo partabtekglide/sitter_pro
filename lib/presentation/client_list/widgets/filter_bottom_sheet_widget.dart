@@ -147,11 +147,11 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
                 });
               },
               selectedColor:
-                  AppTheme.lightTheme.primaryColor.withValues(alpha: 0.2),
-              checkmarkColor: AppTheme.lightTheme.primaryColor,
+                  theme.colorScheme.primary.withValues(alpha: 0.2),
+              checkmarkColor: theme.colorScheme.primary,
               labelStyle: TextStyle(
                 color: isSelected
-                    ? AppTheme.lightTheme.primaryColor
+                    ? theme.colorScheme.primary
                     : theme.colorScheme.onSurface,
                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
               ),
@@ -193,7 +193,7 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
               });
             },
             contentPadding: EdgeInsets.zero,
-            activeColor: AppTheme.lightTheme.primaryColor,
+            activeColor: theme.colorScheme.primary,
           );
         }),
       ],
@@ -217,7 +217,7 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
         Text(
           'Within ${proximityValue.round()} miles',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: AppTheme.lightTheme.primaryColor,
+            color: theme.colorScheme.primary,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -231,7 +231,7 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
               _filters['locationProximity'] = value;
             });
           },
-          activeColor: AppTheme.lightTheme.primaryColor,
+          activeColor: theme.colorScheme.primary,
         ),
       ],
     );
@@ -273,11 +273,11 @@ class _FilterBottomSheetWidgetState extends State<FilterBottomSheetWidget> {
                 });
               },
               selectedColor:
-                  AppTheme.lightTheme.primaryColor.withValues(alpha: 0.2),
-              checkmarkColor: AppTheme.lightTheme.primaryColor,
+                  theme.colorScheme.primary.withValues(alpha: 0.2),
+              checkmarkColor: theme.colorScheme.primary,
               labelStyle: TextStyle(
                 color: isSelected
-                    ? AppTheme.lightTheme.primaryColor
+                    ? theme.colorScheme.primary
                     : theme.colorScheme.onSurface,
                 fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
               ),

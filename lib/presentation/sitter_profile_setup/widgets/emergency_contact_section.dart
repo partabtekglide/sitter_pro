@@ -76,20 +76,20 @@ class _EmergencyContactSectionState extends State<EmergencyContactSection> {
           children: [
             Text(
               'Emergency Contacts',
-              style: AppTheme.lightTheme.textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             if (widget.contacts.length < 3)
               TextButton.icon(
                 onPressed: _addContact,
                 icon: CustomIconWidget(
                   iconName: 'add',
-                  color: AppTheme.lightTheme.colorScheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 18,
                 ),
                 label: Text(
                   'Add Contact',
-                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.primary,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -99,8 +99,8 @@ class _EmergencyContactSectionState extends State<EmergencyContactSection> {
         SizedBox(height: 1.h),
         Text(
           'Add emergency contacts for safety during your sitting jobs',
-          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurface
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface
                 .withValues(alpha: 0.7),
           ),
         ),
@@ -122,25 +122,25 @@ class _EmergencyContactSectionState extends State<EmergencyContactSection> {
       width: double.infinity,
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
         children: [
           CustomIconWidget(
             iconName: 'contact_emergency',
-            color: AppTheme.lightTheme.colorScheme.onSurface
+            color: Theme.of(context).colorScheme.onSurface
                 .withValues(alpha: 0.5),
             size: 32,
           ),
           SizedBox(height: 2.h),
           Text(
             'No emergency contacts added',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.onSurface
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface
                   .withValues(alpha: 0.7),
             ),
           ),
@@ -149,7 +149,7 @@ class _EmergencyContactSectionState extends State<EmergencyContactSection> {
             onPressed: _addContact,
             icon: CustomIconWidget(
               iconName: 'add',
-              color: AppTheme.lightTheme.colorScheme.onPrimary,
+              color: Theme.of(context).colorScheme.onPrimary,
               size: 18,
             ),
             label: const Text('Add First Contact'),
@@ -164,10 +164,10 @@ class _EmergencyContactSectionState extends State<EmergencyContactSection> {
       margin: EdgeInsets.only(bottom: 2.h),
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -178,13 +178,13 @@ class _EmergencyContactSectionState extends State<EmergencyContactSection> {
             children: [
               Text(
                 'Contact ${index + 1}',
-                style: AppTheme.lightTheme.textTheme.titleSmall,
+                style: Theme.of(context).textTheme.titleSmall,
               ),
               IconButton(
                 onPressed: () => _removeContact(index),
                 icon: CustomIconWidget(
                   iconName: 'delete',
-                  color: AppTheme.lightTheme.colorScheme.error,
+                  color: Theme.of(context).colorScheme.error,
                   size: 20,
                 ),
                 constraints: const BoxConstraints(),
@@ -227,7 +227,7 @@ class _EmergencyContactSectionState extends State<EmergencyContactSection> {
             keyboardType: TextInputType.phone,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
+              LengthLimitingTextInputFormatter(11),
             ],
             onChanged: (value) {
               _updateContact(
@@ -243,8 +243,8 @@ class _EmergencyContactSectionState extends State<EmergencyContactSection> {
               if (value == null || value.isEmpty) {
                 return 'Please enter phone number';
               }
-              if (value.length < 10) {
-                return 'Please enter a valid phone number';
+              if (value.length < 10 || value.length > 11) {
+                return 'Enter a valid 10 or 11 digit phone number';
               }
               return null;
             },

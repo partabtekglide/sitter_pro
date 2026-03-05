@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 import '../../core/app_export.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -151,8 +152,11 @@ class _EditClientScreenState extends State<EditClientScreen> {
                       label: 'Phone',
                       icon: Icons.phone,
                       inputType: TextInputType.phone,
-                      validator: (v) =>
-                          v?.isEmpty == true ? 'Phone is required' : null,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Phone is required';
+                        if (v.length < 10 || v.length > 11) return 'Enter a valid 10-11 digit number';
+                        return null;
+                      },
                     ),
                     SizedBox(height: 2.h),
                     _buildTextField(
@@ -187,6 +191,12 @@ class _EditClientScreenState extends State<EditClientScreen> {
                       label: 'Contact Phone',
                       icon: Icons.phone_in_talk,
                       inputType: TextInputType.phone,
+                      validator: (v) {
+                        if (v != null && v.isNotEmpty) {
+                          if (v.length < 10 || v.length > 11) return 'Enter a valid 10-11 digit number';
+                        }
+                        return null;
+                      },
                     ),
 
                     SizedBox(height: 4.h),
@@ -284,6 +294,9 @@ class _EditClientScreenState extends State<EditClientScreen> {
       keyboardType: inputType,
       maxLines: maxLines,
       validator: validator,
+      inputFormatters: inputType == TextInputType.phone 
+          ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(11)] 
+          : null,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -292,6 +305,7 @@ class _EditClientScreenState extends State<EditClientScreen> {
         ),
         filled: true,
         fillColor: Theme.of(context).colorScheme.surface,
+        hintText: inputType == TextInputType.phone ? 'Enter 10-11 digit number' : null,
       ),
     );
   }

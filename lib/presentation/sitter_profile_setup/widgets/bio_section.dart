@@ -42,7 +42,7 @@ class _BioSectionState extends State<BioSection> {
           children: [
             Text(
               'Professional Bio',
-              style: AppTheme.lightTheme.textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             TextButton.icon(
               onPressed: () {
@@ -52,13 +52,13 @@ class _BioSectionState extends State<BioSection> {
               },
               icon: CustomIconWidget(
                 iconName: _showTips ? 'expand_less' : 'help_outline',
-                color: AppTheme.lightTheme.colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 18,
               ),
               label: Text(
                 _showTips ? 'Hide Tips' : 'Writing Tips',
-                style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                  color: AppTheme.lightTheme.colorScheme.primary,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -68,8 +68,8 @@ class _BioSectionState extends State<BioSection> {
         SizedBox(height: 1.h),
         Text(
           'Tell potential clients about yourself, your experience, and what makes you a great sitter',
-          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurface
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface
                 .withValues(alpha: 0.7),
           ),
         ),
@@ -89,30 +89,30 @@ class _BioSectionState extends State<BioSection> {
                 'Hi! I\'m a reliable and caring sitter with 3 years of experience...',
             alignLabelWithHint: true,
             counterText: '$currentLength/$maxLength',
-            counterStyle: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
+            counterStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: currentLength > maxLength * 0.9
-                  ? AppTheme.lightTheme.colorScheme.error
-                  : AppTheme.lightTheme.colorScheme.onSurface
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.onSurface
                       .withValues(alpha: 0.6),
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: AppTheme.lightTheme.colorScheme.outline
+                color: Theme.of(context).colorScheme.outline
                     .withValues(alpha: 0.3),
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: AppTheme.lightTheme.colorScheme.outline
+                color: Theme.of(context).colorScheme.outline
                     .withValues(alpha: 0.3),
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(
-                color: AppTheme.lightTheme.colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 width: 2,
               ),
             ),
@@ -130,10 +130,10 @@ class _BioSectionState extends State<BioSection> {
           padding: EdgeInsets.all(3.w),
           decoration: BoxDecoration(
             color:
-                AppTheme.lightTheme.colorScheme.tertiary.withValues(alpha: 0.1),
+                Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppTheme.lightTheme.colorScheme.tertiary
+              color: Theme.of(context).colorScheme.tertiary
                   .withValues(alpha: 0.3),
             ),
           ),
@@ -141,15 +141,15 @@ class _BioSectionState extends State<BioSection> {
             children: [
               CustomIconWidget(
                 iconName: 'info',
-                color: AppTheme.lightTheme.colorScheme.tertiary,
+                color: Theme.of(context).colorScheme.tertiary,
                 size: 20,
               ),
               SizedBox(width: 2.w),
               Expanded(
                 child: Text(
                   'A well-written bio can increase your booking rate by up to 40%',
-                  style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.tertiary,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.tertiary,
                   ),
                 ),
               ),
@@ -164,10 +164,10 @@ class _BioSectionState extends State<BioSection> {
     return Container(
       padding: EdgeInsets.all(3.w),
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -177,14 +177,14 @@ class _BioSectionState extends State<BioSection> {
             children: [
               CustomIconWidget(
                 iconName: 'edit',
-                color: AppTheme.lightTheme.colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 20,
               ),
               SizedBox(width: 2.w),
               Text(
                 'Writing Tips',
-                style: AppTheme.lightTheme.textTheme.titleSmall?.copyWith(
-                  color: AppTheme.lightTheme.colorScheme.primary,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -201,16 +201,16 @@ class _BioSectionState extends State<BioSection> {
                           height: 4,
                           margin: EdgeInsets.only(top: 0.8.h, right: 2.w),
                           decoration: BoxDecoration(
-                            color: AppTheme.lightTheme.colorScheme.primary,
+                            color: Theme.of(context).colorScheme.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
                         Expanded(
                           child: Text(
                             tip,
-                            style: AppTheme.lightTheme.textTheme.bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                              color: AppTheme.lightTheme.colorScheme.onSurface
+                              color: Theme.of(context).colorScheme.onSurface
                                   .withValues(alpha: 0.8),
                             ),
                           ),

@@ -26,13 +26,13 @@ class ServiceTypeSelector extends StatelessWidget {
       children: [
         Text(
           'Service Types',
-          style: AppTheme.lightTheme.textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleMedium,
         ),
         SizedBox(height: 1.h),
         Text(
           'Select the services you offer (you can choose multiple)',
-          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurface
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface
                 .withValues(alpha: 0.7),
           ),
         ),
@@ -42,14 +42,14 @@ class ServiceTypeSelector extends StatelessWidget {
           runSpacing: 1.h,
           children: ServiceType.values.map((service) {
             final isSelected = selectedServices.contains(service);
-            return _buildServiceChip(service, isSelected);
+            return _buildServiceChip(context, service, isSelected);
           }).toList(),
         ),
       ],
     );
   }
 
-  Widget _buildServiceChip(ServiceType service, bool isSelected) {
+  Widget _buildServiceChip(BuildContext context, ServiceType service, bool isSelected) {
     return GestureDetector(
       onTap: () {
         List<ServiceType> updatedServices = List.from(selectedServices);
@@ -64,13 +64,13 @@ class ServiceTypeSelector extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.5.h),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.lightTheme.colorScheme.primary
-              : AppTheme.lightTheme.colorScheme.surface,
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
           border: Border.all(
             color: isSelected
-                ? AppTheme.lightTheme.colorScheme.primary
-                : AppTheme.lightTheme.colorScheme.outline
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline
                     .withValues(alpha: 0.3),
             width: 1.5,
           ),
@@ -81,18 +81,18 @@ class ServiceTypeSelector extends StatelessWidget {
             CustomIconWidget(
               iconName: _getServiceIcon(service),
               color: isSelected
-                  ? AppTheme.lightTheme.colorScheme.onPrimary
-                  : AppTheme.lightTheme.colorScheme.onSurface
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : Theme.of(context).colorScheme.onSurface
                       .withValues(alpha: 0.7),
               size: 20,
             ),
             SizedBox(width: 2.w),
             Text(
               _getServiceLabel(service),
-              style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: isSelected
-                    ? AppTheme.lightTheme.colorScheme.onPrimary
-                    : AppTheme.lightTheme.colorScheme.onSurface,
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : Theme.of(context).colorScheme.onSurface,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
               ),
             ),

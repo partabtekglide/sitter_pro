@@ -42,7 +42,7 @@ class ClientCardWidget extends StatelessWidget {
           children: [
             SlidableAction(
               onPressed: (_) => onCall?.call(),
-              backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
+              backgroundColor: theme.colorScheme.tertiary,
               foregroundColor: Colors.white,
               icon: Icons.phone,
               label: 'Call',
@@ -50,7 +50,7 @@ class ClientCardWidget extends StatelessWidget {
             ),
             SlidableAction(
               onPressed: (_) => onMessage?.call(),
-              backgroundColor: AppTheme.lightTheme.primaryColor,
+              backgroundColor: theme.colorScheme.primary,
               foregroundColor: Colors.white,
               icon: Icons.message,
               label: 'Message',
@@ -98,7 +98,7 @@ class ClientCardWidget extends StatelessWidget {
               padding: EdgeInsets.all(4.w),
               child: Row(
                 children: [
-                  _buildProfileImage(),
+                  _buildProfileImage(theme),
                   SizedBox(width: 3.w),
                   Expanded(
                     child: Column(
@@ -116,7 +116,7 @@ class ClientCardWidget extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            _buildStatusIndicator(colorScheme),
+                            _buildStatusIndicator(theme),
                           ],
                         ),
                         SizedBox(height: 0.5.h),
@@ -193,14 +193,14 @@ class ClientCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileImage() {
+  Widget _buildProfileImage(ThemeData theme) {
     return Container(
       width: 15.w,
       height: 15.w,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -216,7 +216,7 @@ class ClientCardWidget extends StatelessWidget {
                     'Client profile photo',
               )
             : Container(
-                color: AppTheme.lightTheme.colorScheme.primary
+                color: theme.colorScheme.primary
                     .withValues(alpha: 0.1),
                 child: Center(
                   child: Text(
@@ -224,7 +224,7 @@ class ClientCardWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.lightTheme.colorScheme.primary,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
                 ),
@@ -233,7 +233,7 @@ class ClientCardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusIndicator(ColorScheme colorScheme) {
+  Widget _buildStatusIndicator(ThemeData theme) {
     final status = _getClientStatus();
     Color statusColor;
 
@@ -245,7 +245,7 @@ class ClientCardWidget extends StatelessWidget {
         statusColor = AppTheme.warningLight;
         break;
       case 'inactive':
-        statusColor = colorScheme.onSurface.withValues(alpha: 0.4);
+        statusColor = theme.colorScheme.onSurface.withValues(alpha: 0.4);
         break;
       default:
         return const SizedBox.shrink();

@@ -140,7 +140,7 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
   Future<void> _showPhotoOptions() async {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.lightTheme.colorScheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -153,7 +153,7 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
               width: 12.w,
               height: 0.5.h,
               decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.outline
+                color: Theme.of(context).colorScheme.outline
                     .withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
@@ -161,18 +161,18 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
             SizedBox(height: 3.h),
             Text(
               'Select Profile Photo',
-              style: AppTheme.lightTheme.textTheme.titleMedium,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             SizedBox(height: 3.h),
             ListTile(
               leading: CustomIconWidget(
                 iconName: 'camera_alt',
-                color: AppTheme.lightTheme.colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 24,
               ),
               title: Text(
                 'Take Photo',
-                style: AppTheme.lightTheme.textTheme.bodyLarge,
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
               onTap: () async {
                 Navigator.pop(context);
@@ -187,12 +187,12 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
             ListTile(
               leading: CustomIconWidget(
                 iconName: 'photo_library',
-                color: AppTheme.lightTheme.colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary,
                 size: 24,
               ),
               title: Text(
                 'Choose from Gallery',
-                style: AppTheme.lightTheme.textTheme.bodyLarge,
+                style: Theme.of(context).textTheme.bodyLarge,
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -203,13 +203,13 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
               ListTile(
                 leading: CustomIconWidget(
                   iconName: 'delete',
-                  color: AppTheme.lightTheme.colorScheme.error,
+                  color: Theme.of(context).colorScheme.error,
                   size: 24,
                 ),
                 title: Text(
                   'Remove Photo',
-                  style: AppTheme.lightTheme.textTheme.bodyLarge?.copyWith(
-                    color: AppTheme.lightTheme.colorScheme.error,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.error,
                   ),
                 ),
                 onTap: () {
@@ -238,7 +238,7 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
       height: 50.h,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: AppTheme.lightTheme.colorScheme.surface,
+        color: Theme.of(context).colorScheme.surface,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -281,13 +281,13 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
                         color: Colors.white,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppTheme.lightTheme.colorScheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           width: 3,
                         ),
                       ),
                       child: CustomIconWidget(
                         iconName: 'camera_alt',
-                        color: AppTheme.lightTheme.colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         size: 28,
                       ),
                     ),
@@ -312,9 +312,9 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
             height: 30.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.lightTheme.colorScheme.surface,
+              color: Theme.of(context).colorScheme.surface,
               border: Border.all(
-                color: AppTheme.lightTheme.colorScheme.outline
+                color: Theme.of(context).colorScheme.outline
                     .withValues(alpha: 0.3),
                 width: 2,
               ),
@@ -351,15 +351,15 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
                         children: [
                           CustomIconWidget(
                             iconName: 'add_a_photo',
-                            color: AppTheme.lightTheme.colorScheme.primary,
+                            color: Theme.of(context).colorScheme.primary,
                             size: 32,
                           ),
                           SizedBox(height: 1.h),
                           Text(
                             'Add Photo',
-                            style: AppTheme.lightTheme.textTheme.bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                              color: AppTheme.lightTheme.colorScheme.primary,
+                              color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -370,8 +370,8 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
         SizedBox(height: 2.h),
         Text(
           'Add a professional photo to build trust with clients',
-          style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-            color: AppTheme.lightTheme.colorScheme.onSurface
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurface
                 .withValues(alpha: 0.7),
           ),
           textAlign: TextAlign.center,

@@ -26,7 +26,7 @@ class _DashboardState extends State<Dashboard> with TickerProviderStateMixin, Ro
   bool _isLocationEnabled = false;
   Map<String, dynamic>? _weatherData;
   late TabController _tabController;
-  String _userName = 'Sitter';
+  String _userName = ''; // TODO: place holder: sitter
 
   // Real data from Supabase
   List<Map<String, dynamic>> _todayAppointments = [];

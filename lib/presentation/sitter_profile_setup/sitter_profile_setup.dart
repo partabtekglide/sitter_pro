@@ -151,7 +151,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppTheme.lightTheme.colorScheme.error,
+        backgroundColor: Theme.of(context).colorScheme.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -197,7 +197,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Profile setup completed successfully!'),
-            backgroundColor: AppTheme.lightTheme.colorScheme.tertiary,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -217,7 +217,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save profile: ${e.toString()}'),
-            backgroundColor: AppTheme.lightTheme.colorScheme.error,
+            backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -256,7 +256,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
                 child: Text(
                   'Exit',
                   style: TextStyle(
-                    color: AppTheme.lightTheme.colorScheme.error,
+                    color: Theme.of(context).colorScheme.error,
                   ),
                 ),
               ),
@@ -271,20 +271,20 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: Text(
             'Profile Setup',
-            style: AppTheme.lightTheme.textTheme.titleLarge,
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-          backgroundColor: AppTheme.lightTheme.appBarTheme.backgroundColor,
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           elevation: 0,
           leading: IconButton(
             onPressed:
                 _currentStep > 0 ? _previousStep : () => Navigator.pop(context),
             icon: CustomIconWidget(
               iconName: 'arrow_back',
-              color: AppTheme.lightTheme.colorScheme.onSurface,
+              color: Theme.of(context).colorScheme.onSurface,
               size: 24,
             ),
           ),
@@ -335,8 +335,8 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
                           height: 4,
                           decoration: BoxDecoration(
                             color: isCompleted || isCurrent
-                                ? AppTheme.lightTheme.colorScheme.primary
-                                : AppTheme.lightTheme.colorScheme.outline
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context).colorScheme.outline
                                     .withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(2),
                           ),
@@ -352,8 +352,8 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
           SizedBox(height: 2.h),
           Text(
             'Step ${_currentStep + 1} of $totalSteps',
-            style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.onSurface
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface
                   .withValues(alpha: 0.7),
               fontWeight: FontWeight.w500,
             ),
@@ -371,13 +371,13 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
         children: [
           Text(
             'Personal Information',
-            style: AppTheme.lightTheme.textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
           SizedBox(height: 1.h),
           Text(
             'Let\'s start with your basic information',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.onSurface
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface
                   .withValues(alpha: 0.7),
             ),
           ),
@@ -416,14 +416,14 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
             keyboardType: TextInputType.phone,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
+              LengthLimitingTextInputFormatter(11),
             ],
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your phone number';
               }
-              if (value.length < 10) {
-                return 'Please enter a valid phone number';
+              if (value.length < 10 || value.length > 11) {
+                return 'Enter a valid 10 or 11 digit phone number';
               }
               return null;
             },
@@ -471,13 +471,13 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
         children: [
           Text(
             'Service Preferences',
-            style: AppTheme.lightTheme.textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
           SizedBox(height: 1.h),
           Text(
             'Tell us about the services you offer',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.onSurface
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface
                   .withValues(alpha: 0.7),
             ),
           ),
@@ -513,13 +513,13 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
         children: [
           Text(
             'Additional Information',
-            style: AppTheme.lightTheme.textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
           SizedBox(height: 1.h),
           Text(
             'Help clients get to know you better',
-            style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
-              color: AppTheme.lightTheme.colorScheme.onSurface
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface
                   .withValues(alpha: 0.7),
             ),
           ),
@@ -551,11 +551,11 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
     return Container(
       padding: EdgeInsets.all(4.w),
       decoration: BoxDecoration(
-        color: AppTheme.lightTheme.colorScheme.surface,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
           top: BorderSide(
             color:
-                AppTheme.lightTheme.colorScheme.outline.withValues(alpha: 0.2),
+                Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           ),
         ),
       ),
@@ -581,7 +581,7 @@ class _SitterProfileSetupState extends State<SitterProfileSetup>
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.lightTheme.colorScheme.onPrimary,
+                            Theme.of(context).colorScheme.onPrimary,
                           ),
                         ),
                       )

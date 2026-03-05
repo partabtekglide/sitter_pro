@@ -165,6 +165,14 @@ Future<void> signUp({
   User? get currentUser => client.auth.currentUser;
   Stream<AuthState> get authStateChanges => client.auth.onAuthStateChange;
 
+  Future<void> resetPasswordForEmail(String email) async {
+    try {
+      await client.auth.resetPasswordForEmail(email);
+    } catch (error) {
+      throw Exception('Password reset failed: $error');
+    }
+  }
+
   // User Profile Methods
   Future<String> uploadAvatar(String userId, String filePath) async {
     try {

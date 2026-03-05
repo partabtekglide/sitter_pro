@@ -541,8 +541,13 @@ class _ClientSelectionWidgetState extends State<ClientSelectionWidget> {
                       decoration: const InputDecoration(
                         labelText: 'Phone Number *',
                         border: OutlineInputBorder(),
+                        hintText: 'Enter 10-11 digit number',
                       ),
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
                     ),
 
                     SizedBox(height: 2.h),
@@ -584,8 +589,13 @@ class _ClientSelectionWidgetState extends State<ClientSelectionWidget> {
                       decoration: const InputDecoration(
                         labelText: 'Emergency Contact Phone',
                         border: OutlineInputBorder(),
+                        hintText: 'Enter 10-11 digit number',
                       ),
                       keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
                     ),
 
                     SizedBox(height: 2.h),
@@ -748,6 +758,13 @@ class _ClientSelectionWidgetState extends State<ClientSelectionWidget> {
                                     ),
                                   );
                                 }
+                              } else if (phoneController.text.length < 10 || phoneController.text.length > 11) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Please enter a valid 10-11 digit phone number'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(

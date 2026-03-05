@@ -175,9 +175,9 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.lightTheme.colorScheme.primary,
-              AppTheme.lightTheme.colorScheme.primaryContainer,
-              AppTheme.lightTheme.colorScheme.secondary,
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.primaryContainer,
+              Theme.of(context).colorScheme.secondary,
             ],
             stops: const [0.0, 0.6, 1.0],
           ),
@@ -232,7 +232,7 @@ class _SplashScreenState extends State<SplashScreen>
                   children: [
                     CustomIconWidget(
                       iconName: 'pets',
-                      color: AppTheme.lightTheme.colorScheme.primary,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 8.w,
                     ),
                     SizedBox(height: 1.h),
@@ -241,7 +241,7 @@ class _SplashScreenState extends State<SplashScreen>
                       style: TextStyle(
                         fontSize: 6.w,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.lightTheme.colorScheme.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -371,7 +371,7 @@ class _SplashScreenState extends State<SplashScreen>
                 onPressed: _retryInitialization,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: AppTheme.lightTheme.colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.primary,
                   padding: EdgeInsets.symmetric(vertical: 2.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(2.w),

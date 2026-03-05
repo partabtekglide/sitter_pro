@@ -63,6 +63,7 @@ CREATE TABLE public.clients (
   address text,
   avatar_url text,
   preferred_rate numeric DEFAULT 25.00,
+  preferred_services text[] DEFAULT '{}'::text[],
   CONSTRAINT clients_pkey PRIMARY KEY (id),
   CONSTRAINT clients_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.user_profiles(id)
 );
