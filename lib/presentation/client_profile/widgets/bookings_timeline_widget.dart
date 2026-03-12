@@ -127,37 +127,37 @@ class BookingsTimelineWidget extends StatelessWidget {
 
     return Slidable(
       key: ValueKey(booking["id"]),
-      endActionPane: ActionPane(
-        motion: const ScrollMotion(),
-        children: [
-          SlidableAction(
-            onPressed: (context) => onDuplicate?.call(booking),
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: theme.colorScheme.onPrimary,
-            icon: Icons.copy,
-            label: 'Duplicate',
-            borderRadius:
-                const BorderRadius.horizontal(left: Radius.circular(12)),
-          ),
-          SlidableAction(
-            onPressed: (context) => onInvoice?.call(booking),
-            backgroundColor: theme.colorScheme.secondary,
-            foregroundColor: theme.colorScheme.onSecondary,
-            icon: Icons.receipt,
-            label: 'Invoice',
-          ),
-          if (paymentStatus.toLowerCase() != 'paid')
-            SlidableAction(
-              onPressed: (context) => onMarkPaid?.call(booking),
-              backgroundColor: AppTheme.successLight,
-              foregroundColor: Colors.white,
-              icon: Icons.payment,
-              label: 'Mark Paid',
-              borderRadius:
-                  const BorderRadius.horizontal(right: Radius.circular(12)),
-            ),
-        ],
-      ),
+      // endActionPane: ActionPane(
+      //   motion: const ScrollMotion(),
+      //   children: [
+      //     SlidableAction(
+      //       onPressed: (context) => onDuplicate?.call(booking),
+      //       backgroundColor: theme.colorScheme.primary,
+      //       foregroundColor: theme.colorScheme.onPrimary,
+      //       icon: Icons.copy,
+      //       label: 'Duplicate',
+      //       borderRadius:
+      //           const BorderRadius.horizontal(left: Radius.circular(12)),
+      //     ),
+      //     SlidableAction(
+      //       onPressed: (context) => onInvoice?.call(booking),
+      //       backgroundColor: theme.colorScheme.secondary,
+      //       foregroundColor: theme.colorScheme.onSecondary,
+      //       icon: Icons.receipt,
+      //       label: 'Invoice',
+      //     ),
+      //     if (paymentStatus.toLowerCase() != 'paid')
+      //       SlidableAction(
+      //         onPressed: (context) => onMarkPaid?.call(booking),
+      //         backgroundColor: AppTheme.successLight,
+      //         foregroundColor: Colors.white,
+      //         icon: Icons.payment,
+      //         label: 'Mark Paid',
+      //         borderRadius:
+      //             const BorderRadius.horizontal(right: Radius.circular(12)),
+      //       ),
+      //   ],
+      // ),
       child: Card(
         elevation: isLatest ? 2 : 1,
         shape: RoundedRectangleBorder(

@@ -355,10 +355,10 @@ class _ClientProfileState extends State<ClientProfile>
                         padding: EdgeInsets.only(top: 2.h, bottom: 10.h),
                         child: BookingsTimelineWidget(
                           bookings: _bookings,
-                          onBookingTap: _viewBookingDetails,
-                          onDuplicate: _duplicateBooking,
-                          onInvoice: _generateInvoice,
-                          onMarkPaid: _markBookingPaid,
+                          // onBookingTap: _viewBookingDetails,
+                          // onDuplicate: _duplicateBooking,
+                          // onInvoice: _generateInvoice,
+                          // onMarkPaid: _markBookingPaid,
                         ),
                       ),
 

@@ -37,51 +37,51 @@ class ClientCardWidget extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 1.h),
       child: Slidable(
         key: ValueKey(client['id']),
-        startActionPane: ActionPane(
-          motion: const ScrollMotion(),
-          children: [
-            SlidableAction(
-              onPressed: (_) => onCall?.call(),
-              backgroundColor: theme.colorScheme.tertiary,
-              foregroundColor: Colors.white,
-              icon: Icons.phone,
-              label: 'Call',
-              borderRadius: BorderRadius.circular(12),
-            ),
-            SlidableAction(
-              onPressed: (_) => onMessage?.call(),
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-              icon: Icons.message,
-              label: 'Message',
-              borderRadius: BorderRadius.circular(12),
-            ),
-            SlidableAction(
-              onPressed: (_) => onNewBooking?.call(),
-              backgroundColor: AppTheme.successLight,
-              foregroundColor: Colors.white,
-              icon: Icons.add_circle,
-              label: 'Book',
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ],
-        ),
-        endActionPane: ActionPane(
-          motion: const ScrollMotion(),
-          children: [
-            SlidableAction(
-              onPressed: (_) => _showArchiveConfirmation(context),
-              backgroundColor: AppTheme.warningLight,
-              foregroundColor: Colors.white,
-              icon: Icons.archive,
-              label: 'Archive',
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ],
-        ),
+        // startActionPane: ActionPane(
+        //   motion: const ScrollMotion(),
+        //   children: [
+        //     SlidableAction(
+        //       onPressed: (_) => onCall?.call(),
+        //       backgroundColor: theme.colorScheme.tertiary,
+        //       foregroundColor: Colors.white,
+        //       icon: Icons.phone,
+        //       label: 'Call',
+        //       borderRadius: BorderRadius.circular(12),
+        //     ),
+        //     SlidableAction(
+        //       onPressed: (_) => onMessage?.call(),
+        //       backgroundColor: theme.colorScheme.primary,
+        //       foregroundColor: Colors.white,
+        //       icon: Icons.message,
+        //       label: 'Message',
+        //       borderRadius: BorderRadius.circular(12),
+        //     ),
+        //     SlidableAction(
+        //       onPressed: (_) => onNewBooking?.call(),
+        //       backgroundColor: AppTheme.successLight,
+        //       foregroundColor: Colors.white,
+        //       icon: Icons.add_circle,
+        //       label: 'Book',
+        //       borderRadius: BorderRadius.circular(12),
+        //     ),
+        //   ],
+        // ),
+        // endActionPane: ActionPane(
+        //   motion: const ScrollMotion(),
+        //   children: [
+        //     SlidableAction(
+        //       onPressed: (_) => _showArchiveConfirmation(context),
+        //       backgroundColor: AppTheme.warningLight,
+        //       foregroundColor: Colors.white,
+        //       icon: Icons.archive,
+        //       label: 'Archive',
+        //       borderRadius: BorderRadius.circular(12),
+        //     ),
+        //   ],
+        // ),
         child: GestureDetector(
           onTap: onTap,
-          onLongPress: () => _showContextMenu(context),
+          // onLongPress: () => _showContextMenu(context),
           child: Container(
             decoration: BoxDecoration(
               color: colorScheme.surface,

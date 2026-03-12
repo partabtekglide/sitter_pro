@@ -384,7 +384,7 @@ class _BookingDetailsWidgetState extends State<BookingDetailsWidget> {
   void _addTemplate(String template) {
     final currentText = _instructionsController.text;
     final newText =
-        currentText.isEmpty ? template : '$currentText\n• $template';
+        currentText.isEmpty ? '• $template' : '$currentText\n• $template';
 
     _instructionsController.text = newText;
     _instructionsController.selection = TextSelection.fromPosition(
